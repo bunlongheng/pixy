@@ -36,7 +36,7 @@ export function ShapeLibrary({ onAdd }: { onAdd: (type: ShapeType) => void }) {
                 style={{
                     width: "100%",
                     padding: "8px 12px",
-                    borderRadius: 10,
+                    borderRadius: 0,
                     border: "1.5px solid #d7dbe3",
                     background: "white",
                     fontSize: 14,
@@ -66,7 +66,7 @@ export function ShapeLibrary({ onAdd }: { onAdd: (type: ShapeType) => void }) {
                             alignItems: "center",
                             gap: 4,
                             padding: "10px 6px",
-                            borderRadius: 12,
+                            borderRadius: 0,
                             border: "1.5px solid #e2e6ee",
                             background: "white",
                             cursor: "pointer",

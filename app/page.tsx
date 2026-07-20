@@ -1,7 +1,8 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useEditor } from "@/lib/useEditor";
 import { exportShapes } from "@/lib/exportImage";
+import { dateLabel } from "@/lib/shapes";
 import { TopBar } from "@/components/TopBar";
 import { ShapeLibrary } from "@/components/ShapeLibrary";
 import { ColorPalette } from "@/components/ColorPalette";
@@ -9,10 +10,12 @@ import { Canvas } from "@/components/Canvas";
 
 export default function PixyShapesPage() {
     const ed = useEditor();
-    const [mode, setMode] = useState<"move" | "paint">("move");
     const [toast, setToast] = useState("");
+    const [today, setToday] = useState("");
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    useEffect(() => setToday(dateLabel(new Date())), []);
 
+    // Picking a color recolors the selected shape and becomes the color for new shapes.
     const pickColor = (c: string) => {
         ed.setColor(c);
         if (ed.selectedId) ed.recolor(ed.selectedId, c);
@@ -25,7 +28,7 @@ export default function PixyShapesPage() {
             return;
         }
         try {
-            const how = await exportShapes(ed.shapes, ed.drawingName);
+            const how = await exportShapes(ed.shapes, ed.drawingName, { student: ed.studentName, date: today });
             setToast(how === "shared" ? "Pick “Save Image” to add to Photos" : "Saved a PNG to your downloads");
         } catch {
             setToast("Could not export - try again");
@@ -33,64 +36,59 @@ export default function PixyShapesPage() {
         setTimeout(() => setToast(""), 2600);
     };
 
-    const btn = (active: boolean): React.CSSProperties => ({
-        padding: "8px 14px",
-        borderRadius: 10,
-        border: `1.5px solid ${active ? "#0068c4" : "#d7dbe3"}`,
-        background: active ? "#0068c4" : "white",
-        color: active ? "white" : "#374151",
+    const btn: React.CSSProperties = {
+        padding: "9px 14px",
+        borderRadius: 0,
+        border: "2px solid #c3c9d4",
+        background: "white",
+        color: "#374151",
         fontSize: 13,
-        fontWeight: 700,
+        fontWeight: 800,
         cursor: "pointer",
-    });
+    };
 
     return (
         <>
             <style>{`
                 .app { display:flex; flex-direction:column; height:100dvh; }
-                .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 16px; background:#fbfcfe; border-bottom:1px solid #e2e6ee; }
+                .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 16px; background:#eef1f6; border-bottom:2px solid #d7dbe3; }
                 .stage { flex:1; display:flex; min-height:0; }
-                .library { width:250px; flex-shrink:0; padding:14px; border-right:1px solid #e2e6ee; background:#f7f9fc; overflow:hidden; }
-                .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:20px; overflow:auto; }
+                .library { width:250px; flex-shrink:0; padding:14px; border-right:2px solid #d7dbe3; background:#f2f4f8; overflow:hidden; }
+                .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:18px; overflow:auto; background:#dfe3ea; }
                 @media (max-width: 760px) {
                     .stage { flex-direction:column; }
-                    .library { width:auto; height:132px; border-right:none; border-bottom:1px solid #e2e6ee; }
-                    .canvas-wrap { padding:12px; }
+                    .library { width:auto; height:130px; border-right:none; border-bottom:2px solid #d7dbe3; }
+                    .canvas-wrap { padding:10px; }
                 }
             `}</style>
 
             <div className="app">
-                <TopBar drawingName={ed.drawingName} setDrawingName={ed.setDrawingName} studentName={ed.studentName} setStudentName={ed.setStudentName} />
+                <TopBar
+                    drawingName={ed.drawingName}
+                    setDrawingName={ed.setDrawingName}
+                    studentName={ed.studentName}
+                    setStudentName={ed.setStudentName}
+                    date={today}
+                />
 
                 <div className="toolbar">
-                    <div role="group" aria-label="Tool mode" style={{ display: "flex", gap: 6, background: "#eef1f6", padding: 4, borderRadius: 12 }}>
-                        <button onClick={() => setMode("move")} aria-pressed={mode === "move"} style={btn(mode === "move")}>
-                            ✥ Move
-                        </button>
-                        <button onClick={() => setMode("paint")} aria-pressed={mode === "paint"} style={btn(mode === "paint")}>
-                            🪣 Paint
-                        </button>
-                    </div>
-
                     <ColorPalette color={ed.color} onPick={pickColor} />
-
                     <div style={{ flex: 1 }} />
-
                     <button
                         onClick={() => ed.selectedId && ed.removeShape(ed.selectedId)}
                         disabled={!ed.selectedId}
                         aria-label="Delete selected shape"
-                        style={{ ...btn(false), opacity: ed.selectedId ? 1 : 0.4, cursor: ed.selectedId ? "pointer" : "not-allowed" }}
+                        style={{ ...btn, opacity: ed.selectedId ? 1 : 0.4, cursor: ed.selectedId ? "pointer" : "not-allowed" }}
                     >
                         🗑 Delete
                     </button>
-                    <button onClick={ed.clearAll} aria-label="Clear canvas" style={btn(false)}>
+                    <button onClick={ed.clearAll} aria-label="Clear canvas" style={btn}>
                         Clear
                     </button>
                     <button
                         onClick={doExport}
                         aria-label="Save to Photos"
-                        style={{ ...btn(false), background: "#111827", color: "white", border: "1.5px solid #111827" }}
+                        style={{ ...btn, background: "#111827", color: "white", border: "2px solid #111827" }}
                     >
                         ⬇ Save to Photos
                     </button>
@@ -104,10 +102,10 @@ export default function PixyShapesPage() {
                         <Canvas
                             shapes={ed.shapes}
                             selectedId={ed.selectedId}
-                            mode={mode}
+                            studentName={ed.studentName}
+                            dateStr={today}
                             onSelect={ed.setSelectedId}
                             onUpdate={ed.updateShape}
-                            onPaint={(id) => ed.recolor(id, ed.color)}
                             canvasRef={canvasRef}
                         />
                     </div>
@@ -125,9 +123,9 @@ export default function PixyShapesPage() {
                         background: "#111827",
                         color: "white",
                         padding: "10px 18px",
-                        borderRadius: 999,
+                        borderRadius: 0,
                         fontSize: 14,
-                        fontWeight: 600,
+                        fontWeight: 700,
                         boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
                         zIndex: 100,
                     }}

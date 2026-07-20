@@ -29,8 +29,8 @@ export interface Shape {
 export type Cell = [number, number]; // grid coords (in CELL units)
 export type Pt = [number, number];
 
-/** Size of one Minecraft "block" in canvas pixels. */
-export const CELL = 16;
+/** Size of one Minecraft "block" in canvas pixels. Chunky, so shapes read as pixel art. */
+export const CELL = 28;
 
 /** Logical canvas size (the white sheet). Fixed so exports are consistent. */
 export const CANVAS_W = 1280;
@@ -241,9 +241,9 @@ export function hitTest(shapes: Shape[], px: number, py: number, cell = CELL): S
 
 /** Default bounding box for a freshly added shape, centered near a point, snapped. */
 export function defaultBox(type: ShapeType): { w: number; h: number } {
-    if (type === "rectangle") return { w: CELL * 12, h: CELL * 7 };
-    if (type === "line-solid" || type === "line-dash" || type === "line-dot") return { w: CELL * 12, h: CELL * 4 };
-    return { w: CELL * 8, h: CELL * 8 };
+    if (type === "rectangle") return { w: CELL * 11, h: CELL * 6 };
+    if (type === "line-solid" || type === "line-dash" || type === "line-dot") return { w: CELL * 11, h: CELL * 4 };
+    return { w: CELL * 7, h: CELL * 7 };
 }
 
 /** Build a new shape centered at (cx, cy), snapped to the grid and kept on-canvas. */

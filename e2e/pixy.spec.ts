@@ -31,8 +31,13 @@ test("clicking a shape draws pixels onto the canvas", async ({ page }) => {
 });
 
 test("export triggers a download when the share sheet is unavailable", async ({ page }) => {
+    // force the download path: headless share() hangs, so disable Web Share
+    await page.addInitScript(() => {
+        Object.defineProperty(Navigator.prototype, "share", { configurable: true, value: undefined });
+        Object.defineProperty(Navigator.prototype, "canShare", { configurable: true, value: () => false });
+    });
     await page.goto("/");
     await page.getByRole("button", { name: "Add Square to canvas" }).click();
-    const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Export drawing to Photos" }).click()]);
+    const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Save to Photos" }).click()]);
     expect(dl.suggestedFilename()).toMatch(/\.png$/);
 });

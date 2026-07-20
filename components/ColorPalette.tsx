@@ -3,7 +3,7 @@ import { PALETTE } from "@/lib/shapes";
 
 export function ColorPalette({ color, onPick }: { color: string; onPick: (c: string) => void }) {
     return (
-        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
             {PALETTE.map((c) => {
                 const active = c.toLowerCase() === color.toLowerCase();
                 return (
@@ -16,11 +16,11 @@ export function ColorPalette({ color, onPick }: { color: string; onPick: (c: str
                         style={{
                             width: 30,
                             height: 30,
-                            borderRadius: "50%",
+                            borderRadius: 0,
                             background: c,
                             cursor: "pointer",
-                            border: active ? "3px solid #1d1d1f" : "2px solid rgba(0,0,0,0.14)",
-                            boxShadow: c === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.12)" : undefined,
+                            border: active ? "3px solid #111827" : "2px solid rgba(0,0,0,0.18)",
+                            boxShadow: c === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.15)" : undefined,
                             transform: active ? "scale(1.12)" : "scale(1)",
                             transition: "transform 0.1s ease",
                         }}
@@ -28,15 +28,7 @@ export function ColorPalette({ color, onPick }: { color: string; onPick: (c: str
                 );
             })}
             <label
-                style={{
-                    position: "relative",
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                    border: "2px dashed #9aa5b1",
-                    cursor: "pointer",
-                }}
+                style={{ position: "relative", width: 30, height: 30, borderRadius: 0, overflow: "hidden", border: "2px dashed #9aa5b1", cursor: "pointer" }}
                 title="Custom color"
                 aria-label="Custom color"
             >

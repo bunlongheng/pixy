@@ -57,8 +57,9 @@ describe("library + search", () => {
 describe("grid helpers", () => {
     it("snap rounds to the block size", () => {
         expect(snap(0)).toBe(0);
-        expect(snap(9)).toBe(16);
-        expect(snap(7)).toBe(0);
+        expect(snap(CELL)).toBe(CELL);
+        expect(snap(CELL * 0.6)).toBe(CELL);
+        expect(snap(CELL * 0.4)).toBe(0);
     });
     it("clamp bounds", () => {
         expect(clamp(-5, 0, 10)).toBe(0);
@@ -91,7 +92,7 @@ describe("geometry", () => {
 
 describe("pixelation (shapeCells)", () => {
     it("a square fills its whole block grid", () => {
-        const s = mk("square", { x: 0, y: 0, w: 64, h: 64 }); // 4x4 blocks
+        const s = mk("square", { x: 0, y: 0, w: CELL * 4, h: CELL * 4 }); // 4x4 blocks
         expect(shapeCells(s)).toHaveLength(16);
     });
     it("every shape type produces at least some cells", () => {

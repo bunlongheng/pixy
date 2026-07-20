@@ -1,33 +1,32 @@
 "use client";
 import { useRef, useEffect, useCallback } from "react";
-import { type Shape, hitTest, movedShape, resizedShape, CANVAS_W, CANVAS_H, CELL } from "@/lib/shapes";
+import { type Shape, hitTest, movedShape, resizedShape, CANVAS_W, CANVAS_H } from "@/lib/shapes";
 import { paintScene, paintSelection, handleRect } from "@/lib/render";
 
 type Props = {
     shapes: Shape[];
     selectedId: string | null;
-    mode: "move" | "paint";
+    studentName: string;
+    dateStr: string;
     onSelect: (id: string | null) => void;
     onUpdate: (id: string, patch: (s: Shape) => Shape) => void;
-    onPaint: (id: string) => void;
     canvasRef: React.RefObject<HTMLCanvasElement | null>;
 };
 
 type Drag = { kind: "move" | "resize"; id: string; startX: number; startY: number; shape: Shape } | null;
 
-export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, canvasRef }: Props) {
+export function Canvas({ shapes, selectedId, studentName, dateStr, onSelect, onUpdate, canvasRef }: Props) {
     const drag = useRef<Drag>(null);
 
-    // redraw whenever the scene changes
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        paintScene(ctx, shapes);
+        paintScene(ctx, shapes, { student: studentName, date: dateStr });
         const sel = shapes.find((s) => s.id === selectedId);
-        if (sel && mode === "move") paintSelection(ctx, sel);
-    }, [shapes, selectedId, mode, canvasRef]);
+        if (sel) paintSelection(ctx, sel);
+    }, [shapes, selectedId, studentName, dateStr, canvasRef]);
 
     const toCanvas = useCallback(
         (clientX: number, clientY: number): [number, number] => {
@@ -42,7 +41,8 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, 
         const [x, y] = toCanvas(e.clientX, e.clientY);
         const sel = shapes.find((s) => s.id === selectedId);
 
-        if (mode === "move" && sel) {
+        // grab the resize handle of the selected shape first
+        if (sel) {
             const hr = handleRect(sel);
             if (x >= hr.x && x <= hr.x + hr.size && y >= hr.y && y <= hr.y + hr.size) {
                 drag.current = { kind: "resize", id: sel.id, startX: x, startY: y, shape: sel };
@@ -52,10 +52,6 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, 
         }
 
         const hit = hitTest(shapes, x, y);
-        if (mode === "paint") {
-            if (hit) onPaint(hit.id);
-            return;
-        }
         if (hit) {
             onSelect(hit.id);
             drag.current = { kind: "move", id: hit.id, startX: x, startY: y, shape: hit };
@@ -71,11 +67,8 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, 
         const [x, y] = toCanvas(e.clientX, e.clientY);
         const dx = x - d.startX;
         const dy = y - d.startY;
-        if (d.kind === "move") {
-            onUpdate(d.id, () => movedShape(d.shape, dx, dy));
-        } else {
-            onUpdate(d.id, () => resizedShape(d.shape, d.shape.w + dx, d.shape.h + dy));
-        }
+        if (d.kind === "move") onUpdate(d.id, () => movedShape(d.shape, dx, dy));
+        else onUpdate(d.id, () => resizedShape(d.shape, d.shape.w + dx, d.shape.h + dy));
     };
 
     const endDrag = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -83,7 +76,7 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, 
             try {
                 e.currentTarget.releasePointerCapture(e.pointerId);
             } catch {
-                /* pointer already released */
+                /* already released */
             }
         }
         drag.current = null;
@@ -102,21 +95,16 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onPaint, 
             onPointerCancel={endDrag}
             style={{
                 display: "block",
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                background: "#ffffff",
-                borderRadius: 10,
-                boxShadow: "0 10px 40px rgba(0,0,0,0.14), inset 0 0 0 1px rgba(0,0,0,0.06)",
-                touchAction: "none",
-                imageRendering: "pixelated",
-                cursor: mode === "paint" ? "crosshair" : "default",
-                aspectRatio: `${CANVAS_W} / ${CANVAS_H}`,
+                // scale down naturally like a replaced element -> element box keeps the
+                // 1280:896 aspect exactly, so pointer coords map 1:1 (no letterbox).
                 maxWidth: "100%",
                 maxHeight: "100%",
+                background: "#ffffff",
+                border: "1px solid #d7dbe3",
+                touchAction: "none",
+                imageRendering: "pixelated",
+                cursor: "pointer",
             }}
         />
     );
 }
-
-export { CELL };
