@@ -36,8 +36,8 @@ export default function PixyShapesPage() {
     const btn = (active: boolean): React.CSSProperties => ({
         padding: "8px 14px",
         borderRadius: 10,
-        border: `1.5px solid ${active ? "#0aa5ff" : "#d7dbe3"}`,
-        background: active ? "#0aa5ff" : "white",
+        border: `1.5px solid ${active ? "#0068c4" : "#d7dbe3"}`,
+        background: active ? "#0068c4" : "white",
         color: active ? "white" : "#374151",
         fontSize: 13,
         fontWeight: 700,
@@ -89,14 +89,14 @@ export default function PixyShapesPage() {
                     </button>
                     <button
                         onClick={doExport}
-                        aria-label="Export drawing to Photos"
+                        aria-label="Save to Photos"
                         style={{ ...btn(false), background: "#111827", color: "white", border: "1.5px solid #111827" }}
                     >
                         ⬇ Save to Photos
                     </button>
                 </div>
 
-                <div className="stage">
+                <main className="stage">
                     <aside className="library">
                         <ShapeLibrary onAdd={ed.addShape} />
                     </aside>
@@ -111,7 +111,7 @@ export default function PixyShapesPage() {
                             canvasRef={canvasRef}
                         />
                     </div>
-                </div>
+                </main>
             </div>
 
             {toast && (
