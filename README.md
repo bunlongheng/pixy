@@ -1,8 +1,15 @@
 # Pixy Shapes
 
+[![CI](https://github.com/bunlongheng/pixy-shapes/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/pixy-shapes/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org)
+[![Live](https://img.shields.io/badge/demo-live-brightgreen)](https://pixy-shapes-bheng.vercel.app)
+
 A kid-friendly, **Minecraft-pixelated** shape editor for iPad and Apple Pencil. Search
 the shape library, tap to drop a shape on a plain white sheet, then move, resize, and
 paint it - and export the finished drawing straight to Photos.
+
+**Live demo: [pixy-shapes-bheng.vercel.app](https://pixy-shapes-bheng.vercel.app)**
 
 ![Pixy Shapes](screenshots/hero.png)
 
