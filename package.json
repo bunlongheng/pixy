@@ -1,9 +1,9 @@
 {
-    "name": "pixy-shapes",
+    "name": "pixy",
     "version": "0.1.0",
     "private": false,
     "license": "MIT",
-    "description": "A kid-friendly Minecraft-pixelated shape editor for iPad + Apple Pencil - add shapes, move/resize, recolor, and export to Photos.",
+    "description": "Pixy - a Minecraft-pixelated shape editor for iPad + Apple Pencil. Add shapes, move/resize, recolor, and export to Photos.",
     "scripts": {
         "dev": "next dev --port 3022",
         "build": "next build",

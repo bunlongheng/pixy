@@ -12,6 +12,7 @@ export type ShapeType =
     | "octagon"
     | "moon"
     | "star"
+    | "asterisk"
     | "line-solid"
     | "line-dash"
     | "line-dot";
@@ -29,8 +30,8 @@ export interface Shape {
 export type Cell = [number, number]; // grid coords (in CELL units)
 export type Pt = [number, number];
 
-/** Size of one Minecraft "block" in canvas pixels. Chunky, so shapes read as pixel art. */
-export const CELL = 28;
+/** Size of one Minecraft "block" in canvas pixels. Tuned so shapes read as pixel art but not crude. */
+export const CELL = 20;
 
 /** Logical canvas size (the white sheet). Fixed so exports are consistent. */
 export const CANVAS_W = 1280;
@@ -55,6 +56,7 @@ export const SHAPE_LIBRARY: LibEntry[] = [
     { type: "hexagon", name: "Hexagon", keywords: ["6", "polygon", "honeycomb"] },
     { type: "octagon", name: "Octagon", keywords: ["8", "polygon", "stop"] },
     { type: "star", name: "Star", keywords: ["night", "sky", "sparkle"] },
+    { type: "asterisk", name: "Asterisk", keywords: ["star", "sparkle", "snowflake", "spokes", "*"] },
     { type: "moon", name: "Moon", keywords: ["crescent", "night", "sky"] },
     { type: "line-solid", name: "Solid Line", keywords: ["line", "stroke", "bar"] },
     { type: "line-dash", name: "Dashed Line", keywords: ["line", "dash", "dashed"] },
@@ -181,26 +183,46 @@ export function pointInShape(s: Shape, px: number, py: number): boolean {
 }
 
 function lineCells(s: Shape, cell: number): Cell[] {
-    // A line runs corner-to-corner across its bbox, one block thick.
-    const x0 = s.x + cell / 2;
-    const y0 = s.y + cell / 2;
-    const x1 = s.x + s.w - cell / 2;
-    const y1 = s.y + s.h - cell / 2;
-    const dist = Math.hypot(x1 - x0, y1 - y0);
-    const steps = Math.max(1, Math.round(dist / cell));
+    // A straight horizontal line down the middle of its bbox, one block thick.
+    const cy = Math.floor((s.y + s.h / 2) / cell);
+    const c0 = Math.floor(s.x / cell);
+    const c1 = Math.ceil((s.x + s.w) / cell);
     const cells: Cell[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i <= steps; i++) {
+    let i = 0;
+    for (let cx = c0; cx < c1; cx++, i++) {
         // dash: draw 2, skip 1; dot: draw 1, skip 1
         if (s.type === "line-dash" && i % 3 === 2) continue;
         if (s.type === "line-dot" && i % 2 === 1) continue;
-        const t = steps === 0 ? 0 : i / steps;
-        const cx = Math.floor((x0 + (x1 - x0) * t) / cell);
-        const cy = Math.floor((y0 + (y1 - y0) * t) / cell);
-        const key = `${cx},${cy}`;
+        cells.push([cx, cy]);
+    }
+    return cells;
+}
+
+function asteriskCells(s: Shape, cell: number): Cell[] {
+    // Six spokes from the centre, one block thick - a pixel asterisk / snowflake.
+    const cx = s.x + s.w / 2;
+    const cy = s.y + s.h / 2;
+    const rx = s.w / 2 - cell / 2;
+    const ry = s.h / 2 - cell / 2;
+    const cells: Cell[] = [];
+    const seen = new Set<string>();
+    const push = (px: number, py: number) => {
+        const gx = Math.floor(px / cell);
+        const gy = Math.floor(py / cell);
+        const key = `${gx},${gy}`;
         if (!seen.has(key)) {
             seen.add(key);
-            cells.push([cx, cy]);
+            cells.push([gx, gy]);
+        }
+    };
+    for (const deg of [0, 60, 120, 180, 240, 300]) {
+        const rad = (deg * Math.PI) / 180;
+        const ex = cx + rx * Math.cos(rad);
+        const ey = cy + ry * Math.sin(rad);
+        const steps = Math.max(1, Math.round(Math.hypot(ex - cx, ey - cy) / cell));
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            push(cx + (ex - cx) * t, cy + (ey - cy) * t);
         }
     }
     return cells;
@@ -209,6 +231,7 @@ function lineCells(s: Shape, cell: number): Cell[] {
 /** Rasterize a shape to Minecraft blocks: the grid cells it covers. Pure. */
 export function shapeCells(s: Shape, cell = CELL): Cell[] {
     if (s.type === "line-solid" || s.type === "line-dash" || s.type === "line-dot") return lineCells(s, cell);
+    if (s.type === "asterisk") return asteriskCells(s, cell);
     const c0x = Math.floor(s.x / cell);
     const c0y = Math.floor(s.y / cell);
     const c1x = Math.ceil((s.x + s.w) / cell);
@@ -241,9 +264,9 @@ export function hitTest(shapes: Shape[], px: number, py: number, cell = CELL): S
 
 /** Default bounding box for a freshly added shape, centered near a point, snapped. */
 export function defaultBox(type: ShapeType): { w: number; h: number } {
-    if (type === "rectangle") return { w: CELL * 11, h: CELL * 6 };
-    if (type === "line-solid" || type === "line-dash" || type === "line-dot") return { w: CELL * 11, h: CELL * 4 };
-    return { w: CELL * 7, h: CELL * 7 };
+    if (type === "rectangle") return { w: CELL * 13, h: CELL * 8 };
+    if (type === "line-solid" || type === "line-dash" || type === "line-dot") return { w: CELL * 13, h: CELL * 4 };
+    return { w: CELL * 9, h: CELL * 9 };
 }
 
 /** Build a new shape centered at (cx, cy), snapped to the grid and kept on-canvas. */

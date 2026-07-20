@@ -29,13 +29,13 @@ export function paintScene(ctx: CanvasRenderingContext2D, shapes: Shape[], namep
 
     for (const s of shapes) {
         ctx.fillStyle = s.color;
-        ctx.strokeStyle = "rgba(0,0,0,0.12)";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(0,0,0,0.07)";
+        ctx.lineWidth = 1;
         for (const [cx, cy] of shapeCells(s, cell)) {
             const x = cx * cell;
             const y = cy * cell;
             ctx.fillRect(x, y, cell, cell);
-            ctx.strokeRect(x, y, cell, cell); // per-block grid = pixel look
+            ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1); // subtle per-block grid
         }
     }
 }

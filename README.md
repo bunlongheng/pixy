@@ -1,23 +1,23 @@
-# Pixy Shapes
+# Pixy
 
-[![CI](https://github.com/bunlongheng/pixy-shapes/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/pixy-shapes/actions/workflows/ci.yml)
+[![CI](https://github.com/bunlongheng/pixy/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/pixy/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org)
-[![Live](https://img.shields.io/badge/demo-live-brightgreen)](https://pixy-shapes-bheng.vercel.app)
+[![Live](https://img.shields.io/badge/demo-live-brightgreen)](https://pixy-bheng.vercel.app)
 
 A kid-friendly, **Minecraft-pixelated** shape editor for iPad and Apple Pencil. Search
 the shape library, tap to drop a shape on a plain white sheet, then move, resize, and
 paint it - and export the finished drawing straight to Photos.
 
-**Live demo: [pixy-shapes-bheng.vercel.app](https://pixy-shapes-bheng.vercel.app)**
+**Live demo: [pixy-bheng.vercel.app](https://pixy-bheng.vercel.app)**
 
-![Pixy Shapes](screenshots/hero.png)
+![Pixy](screenshots/hero.png)
 
 ## Features
 
-- **13 shapes, all pixelated** - square, rectangle, circle, triangle, parallelogram,
-  pentagon, hexagon, octagon, star, moon (crescent), and solid / dashed / dotted lines.
-  Every shape is rasterized to chunky Minecraft blocks.
+- **14 shapes, all pixelated** - square, rectangle, circle, triangle, parallelogram,
+  pentagon, hexagon, octagon, star, asterisk, moon (crescent), and solid / dashed /
+  dotted lines. Every shape is rasterized to chunky Minecraft blocks.
 - **Searchable shape library** - filter by name or keyword, tap to add to the canvas.
 - **Move, resize, recolor** - drag to move, drag the corner grip to resize (everything
   snaps to the block grid). Two modes: **Move** and **Paint** (tap a shape to drop the

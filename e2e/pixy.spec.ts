@@ -4,7 +4,7 @@ test("loads with an empty white canvas and the two name fields", async ({ page }
     await page.goto("/");
     await expect(page.getByRole("img", { name: "Drawing canvas" })).toBeVisible();
     await expect(page.getByLabel("Drawing", { exact: true })).toHaveValue("My Drawing");
-    await expect(page.getByLabel("Student", { exact: true })).toHaveValue("Norden Heng");
+    await expect(page.getByLabel("Student name", { exact: true })).toHaveValue("Norden Heng");
 });
 
 test("search filters the shape library", async ({ page }) => {
