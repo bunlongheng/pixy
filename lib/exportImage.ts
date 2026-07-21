@@ -19,6 +19,12 @@ function renderPng(shapes: Shape[], nameplate: Nameplate, scale = 2): Promise<Bl
  */
 export async function exportShapes(shapes: Shape[], drawingName: string, nameplate: Nameplate): Promise<"shared" | "downloaded"> {
     const filename = exportFilename(drawingName);
+    // make sure the handwriting font is ready so the exported name isn't drawn in a fallback
+    try {
+        await document.fonts.load("700 24px 'For Kids 2'");
+    } catch {
+        /* fallback font is fine */
+    }
     const blob = await renderPng(shapes, nameplate);
     const file = new File([blob], filename, { type: "image/png" });
 

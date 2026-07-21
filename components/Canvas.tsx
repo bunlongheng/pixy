@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useCallback } from "react";
-import { type Shape, hitTest, movedShape, resizedShape, rotatedShape, rotateHandlePoint, resizeHandlePoint, CANVAS_W, CANVAS_H, CELL } from "@/lib/shapes";
+import { type Shape, hitTest, movedShape, rotatedShape, rotateHandlePoint, shapeCorners, resizedFromCorner, CANVAS_W, CANVAS_H, CELL } from "@/lib/shapes";
 import { paintScene, paintSelection } from "@/lib/render";
 
 export type Mode = "select" | "draw" | "erase" | "fill";
@@ -23,7 +23,15 @@ type Props = {
     canvasRef: React.RefObject<HTMLCanvasElement | null>;
 };
 
-type Drag = { kind: "move" | "resize" | "rotate"; id: string; startX: number; startY: number; shape: Shape; snapped: boolean } | null;
+type Drag = {
+    kind: "move" | "resize" | "rotate";
+    id: string;
+    startX: number;
+    startY: number;
+    shape: Shape;
+    snapped: boolean;
+    anchor?: [number, number];
+} | null;
 type Paint = { erase: boolean; lastCx: number; lastCy: number } | null;
 
 /** Grid cells along the segment from (x0,y0) to (x1,y1) - Bresenham, so fast strokes leave no gaps. */
@@ -105,10 +113,14 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onBeginCh
                 e.currentTarget.setPointerCapture(e.pointerId);
                 return;
             }
-            if (near(x, y, resizeHandlePoint(sel))) {
-                drag.current = { kind: "resize", id: sel.id, startX: x, startY: y, shape: sel, snapped: false };
-                e.currentTarget.setPointerCapture(e.pointerId);
-                return;
+            const corners = shapeCorners(sel);
+            for (let i = 0; i < 4; i++) {
+                if (near(x, y, corners[i])) {
+                    // resize this corner while the opposite corner stays put
+                    drag.current = { kind: "resize", id: sel.id, startX: x, startY: y, shape: sel, snapped: false, anchor: corners[(i + 2) % 4] };
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    return;
+                }
             }
         }
         const hit = hitTest(shapes, x, y);
@@ -147,13 +159,8 @@ export function Canvas({ shapes, selectedId, mode, onSelect, onUpdate, onBeginCh
             d.snapped = true;
         }
         if (d.kind === "move") onUpdate(d.id, () => movedShape(d.shape, dx, dy));
-        else if (d.kind === "resize") {
-            // project the drag onto the shape's own (un-rotated) axes so resize feels right when rotated
-            const rad = ((d.shape.angle ?? 0) * Math.PI) / 180;
-            const ldx = dx * Math.cos(-rad) - dy * Math.sin(-rad);
-            const ldy = dx * Math.sin(-rad) + dy * Math.cos(-rad);
-            onUpdate(d.id, () => resizedShape(d.shape, d.shape.w + ldx, d.shape.h + ldy));
-        } else {
+        else if (d.kind === "resize") onUpdate(d.id, () => resizedFromCorner(d.shape, d.anchor!, x, y));
+        else {
             const ccx = d.shape.x + d.shape.w / 2;
             const ccy = d.shape.y + d.shape.h / 2;
             const deg = (Math.atan2(y - ccy, x - ccx) * 180) / Math.PI + 90; // handle sits above the shape

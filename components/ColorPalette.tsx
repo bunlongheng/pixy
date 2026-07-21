@@ -3,7 +3,7 @@ import { PALETTE } from "@/lib/shapes";
 
 export function ColorPalette({ color, onPick }: { color: string; onPick: (c: string) => void }) {
     return (
-        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "nowrap", gap: 6, alignItems: "center", flexShrink: 0 }}>
+        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "nowrap", gap: 13, alignItems: "center", flexShrink: 0 }}>
             {PALETTE.map((c) => {
                 const active = c.toLowerCase() === color.toLowerCase();
                 return (
@@ -20,13 +20,8 @@ export function ColorPalette({ color, onPick }: { color: string; onPick: (c: str
                             borderRadius: 0,
                             background: c,
                             cursor: "pointer",
-                            border: "none",
-                            boxShadow:
-                                [active ? "0 5px 10px rgba(0,0,0,0.3)" : "", c === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.15)" : ""]
-                                    .filter(Boolean)
-                                    .join(", ") || undefined,
-                            transform: active ? "translateY(-4px) scale(1.15)" : "scale(1)",
-                            transition: "transform 0.1s ease",
+                            border: active ? "2px solid #111827" : "none",
+                            boxShadow: c === "#ffffff" ? "inset 0 0 0 1px rgba(0,0,0,0.15)" : undefined,
                         }}
                     />
                 );

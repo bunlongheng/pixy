@@ -512,6 +512,29 @@ export function resizeHandlePoint(s: Shape): Pt {
     return rotatePt(s.x + s.w, s.y + s.h, s.x + s.w / 2, s.y + s.h / 2, rad);
 }
 
+/**
+ * Resize by dragging a corner to canvas point (px,py) while keeping `anchor`
+ * (the opposite corner, in canvas coords) fixed. Works at any rotation.
+ */
+export function resizedFromCorner(s: Shape, anchor: Pt, px: number, py: number): Shape {
+    const rad = ((s.angle ?? 0) * Math.PI) / 180;
+    const ux = Math.cos(rad);
+    const uy = Math.sin(rad); // local x-axis
+    const vx = -Math.sin(rad);
+    const vy = Math.cos(rad); // local y-axis
+    const dx = px - anchor[0];
+    const dy = py - anchor[1];
+    const ldx = dx * ux + dy * uy; // extent along local x
+    const ldy = dx * vx + dy * vy; // extent along local y
+    const w = clamp(snap(Math.abs(ldx)), CELL * 2, CANVAS_W);
+    const h = clamp(snap(Math.abs(ldy)), CELL * 2, CANVAS_H);
+    const sx = ldx >= 0 ? 1 : -1;
+    const sy = ldy >= 0 ? 1 : -1;
+    const cx = anchor[0] + sx * (w / 2) * ux + sy * (h / 2) * vx;
+    const cy = anchor[1] + sx * (w / 2) * uy + sy * (h / 2) * vy;
+    return { ...s, x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
 /** Build a new shape centered at (cx, cy), snapped to the grid and kept on-canvas. */
 export function newShape(id: string, type: ShapeType, cx: number, cy: number, color: string): Shape {
     const { w, h } = defaultBox(type);

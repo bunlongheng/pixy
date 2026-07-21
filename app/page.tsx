@@ -14,6 +14,7 @@ export default function PixyPage() {
     const [toast, setToast] = useState("");
     const [today, setToday] = useState("");
     const [mode, setMode] = useState<Mode>("select");
+    const [confirmClear, setConfirmClear] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const edRef = useRef(ed);
     edRef.current = ed;
@@ -49,6 +50,14 @@ export default function PixyPage() {
         return () => window.removeEventListener("keydown", onKey);
     }, []);
 
+    // Esc closes the clear-confirm modal.
+    useEffect(() => {
+        if (!confirmClear) return;
+        const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setConfirmClear(false);
+        window.addEventListener("keydown", onEsc);
+        return () => window.removeEventListener("keydown", onEsc);
+    }, [confirmClear]);
+
     const pickColor = (c: string) => {
         ed.setColor(c);
         if (ed.selectedId) ed.recolor(ed.selectedId, c);
@@ -71,7 +80,7 @@ export default function PixyPage() {
             return;
         }
         try {
-            const how = await exportShapes(ed.shapes, ed.drawingName, { student: ed.studentName, date: today });
+            const how = await exportShapes(ed.shapes, ed.drawingName, { title: ed.drawingName, student: ed.studentName, date: today });
             setToast(how === "shared" ? "Pick “Save Image” to add to Photos" : "Saved a PNG to your downloads");
         } catch {
             setToast("Could not export - try again");
@@ -79,9 +88,12 @@ export default function PixyPage() {
         setTimeout(() => setToast(""), 2600);
     };
 
-    // Big, flat white-on-color buttons: no icons, no borders. Active tools darken.
+    // Big, flat white-on-color buttons with a white line icon. Active tools darken.
     const bigBtn = (bg: string, active = false): React.CSSProperties => ({
-        padding: "12px 22px",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 9,
+        padding: "12px 20px",
         borderRadius: 0,
         border: "none",
         background: bg,
@@ -96,16 +108,42 @@ export default function PixyPage() {
         filter: active ? "brightness(0.78)" : "none",
     });
 
+    const Icon = ({ d }: { d: string }) => (
+        <svg
+            width="19"
+            height="19"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+            style={{ flexShrink: 0 }}
+        >
+            <path d={d} />
+        </svg>
+    );
+    const ICON = {
+        draw: "M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z",
+        fill: "M12 2.7l5.7 5.7a8 8 0 1 1-11.4 0z",
+        erase: "M7 21l-4.3-4.3a2 2 0 0 1 0-2.8l9.6-9.6a2 2 0 0 1 2.8 0l5.6 5.6a2 2 0 0 1 0 2.8L13 21 M22 21H7 M5 11l8 8",
+        delete: "M3 6h18 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6 M10 11v6 M14 11v6",
+        undo: "M3 7v6h6 M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13",
+        clear: "M18 6 6 18 M6 6l12 12",
+        save: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3",
+    };
+
     return (
         <>
             <style>{`
                 .app { display:flex; flex-direction:column; height:100dvh; }
                 .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; overflow-x:auto; padding:10px 16px; background:#eef1f6; border-bottom:2px solid #d7dbe3; }
                 .stage { flex:1; display:flex; min-height:0; }
-                .library { width:250px; flex-shrink:0; padding:14px; border-right:2px solid #d7dbe3; background:#f2f4f8; overflow:hidden; }
+                .library { width:340px; flex-shrink:0; padding:14px; border-right:2px solid #d7dbe3; background:#f2f4f8; overflow:hidden; }
                 .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:18px; overflow:auto; background:#dfe3ea; }
                 .paper { position:relative; display:inline-flex; max-width:100%; max-height:100%; }
-                .paper-name { position:absolute; top:2.4%; left:3%; right:3%; display:flex; align-items:baseline; justify-content:space-between; gap:12px; pointer-events:none; border-bottom:2px solid #e6e9f0; padding-bottom:0.8%; }
+                .paper-name { position:absolute; top:4.2%; left:2.6%; right:2.6%; display:flex; align-items:baseline; justify-content:space-between; gap:12px; pointer-events:none; }
                 @media (max-width: 760px) {
                     .stage { flex-direction:column; }
                     .library { width:auto; height:130px; border-right:none; border-bottom:2px solid #d7dbe3; }
@@ -114,7 +152,7 @@ export default function PixyPage() {
             `}</style>
 
             <div className="app">
-                <TopBar drawingName={ed.drawingName} setDrawingName={ed.setDrawingName} />
+                <TopBar />
 
                 <div className="toolbar">
                     <ColorPalette color={ed.color} onPick={pickColor} />
@@ -125,6 +163,7 @@ export default function PixyPage() {
                         aria-label="Draw freehand"
                         style={bigBtn("#0aa5ff", mode === "draw")}
                     >
+                        <Icon d={ICON.draw} />
                         Draw
                     </button>
                     <button
@@ -133,9 +172,11 @@ export default function PixyPage() {
                         aria-label="Paint bucket fill"
                         style={bigBtn("#2ecc40", mode === "fill")}
                     >
+                        <Icon d={ICON.fill} />
                         Fill
                     </button>
                     <button onClick={() => toggleMode("erase")} aria-pressed={mode === "erase"} aria-label="Erase" style={bigBtn("#ff5fa2", mode === "erase")}>
+                        <Icon d={ICON.erase} />
                         Erase
                     </button>
                     <button
@@ -144,15 +185,19 @@ export default function PixyPage() {
                         aria-label="Delete selected shape"
                         style={{ ...bigBtn("#e11d2a"), opacity: ed.selectedId ? 1 : 0.4, cursor: ed.selectedId ? "pointer" : "not-allowed" }}
                     >
+                        <Icon d={ICON.delete} />
                         Delete
                     </button>
                     <button onClick={ed.undo} aria-label="Undo" title="Undo (Cmd/Ctrl+Z)" style={bigBtn("#8e44ec")}>
+                        <Icon d={ICON.undo} />
                         Undo
                     </button>
-                    <button onClick={ed.clearAll} aria-label="Clear canvas" style={bigBtn("#9aa5b1")}>
+                    <button onClick={() => (ed.shapes.length ? setConfirmClear(true) : null)} aria-label="Clear canvas" style={bigBtn("#64748b")}>
+                        <Icon d={ICON.clear} />
                         Clear
                     </button>
                     <button onClick={doExport} aria-label="Save to Photos" style={bigBtn("#111827")}>
+                        <Icon d={ICON.save} />
                         Save
                     </button>
                 </div>
@@ -178,25 +223,61 @@ export default function PixyPage() {
                             />
                             <div className="paper-name">
                                 <input
-                                    value={ed.studentName}
-                                    onChange={(e) => ed.setStudentName(e.target.value)}
-                                    aria-label="Student name"
-                                    placeholder="Student name"
-                                    size={Math.max(4, ed.studentName.length)}
+                                    value={ed.drawingName}
+                                    onChange={(e) => ed.setDrawingName(e.target.value)}
+                                    aria-label="Drawing title"
+                                    placeholder="My Drawing"
+                                    className="autosize"
+                                    size={Math.max(6, Math.round(ed.drawingName.length * 1.35) + 2)}
                                     style={{
                                         pointerEvents: "auto",
                                         border: "none",
                                         background: "transparent",
                                         fontFamily: HAND_FONT,
                                         fontWeight: 700,
-                                        fontSize: "clamp(17px, 2.2vw, 30px)",
+                                        fontSize: "clamp(16px, 2vw, 28px)",
+                                        lineHeight: 1.6,
                                         color: "#1d2530",
                                         outline: "none",
-                                        padding: 0,
+                                        padding: "4px 2px",
                                         minWidth: 0,
                                     }}
                                 />
-                                <span style={{ fontWeight: 700, fontSize: "clamp(10px, 1.35vw, 18px)", color: "#6b7280", whiteSpace: "nowrap" }}>{today}</span>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+                                    <input
+                                        value={ed.studentName}
+                                        onChange={(e) => ed.setStudentName(e.target.value)}
+                                        aria-label="Student name"
+                                        placeholder="Student name"
+                                        className="autosize"
+                                        size={Math.max(6, Math.round(ed.studentName.length * 1.35) + 2)}
+                                        style={{
+                                            pointerEvents: "auto",
+                                            textAlign: "right",
+                                            border: "none",
+                                            background: "transparent",
+                                            fontFamily: HAND_FONT,
+                                            fontWeight: 700,
+                                            fontSize: "clamp(12px, 1.4vw, 19px)",
+                                            lineHeight: 1.6,
+                                            color: "#1d2530",
+                                            outline: "none",
+                                            padding: "4px 2px",
+                                            minWidth: 0,
+                                        }}
+                                    />
+                                    <span
+                                        style={{
+                                            fontFamily: HAND_FONT,
+                                            fontWeight: 700,
+                                            fontSize: "clamp(10px, 1.1vw, 14px)",
+                                            color: "#9aa5b1",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {today}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -222,6 +303,52 @@ export default function PixyPage() {
                     }}
                 >
                     {toast}
+                </div>
+            )}
+
+            {confirmClear && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Clear the drawing?"
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        background: "rgba(17,24,39,0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 200,
+                        padding: 20,
+                    }}
+                >
+                    <div
+                        style={{
+                            background: "white",
+                            padding: "26px 26px 22px",
+                            maxWidth: 380,
+                            width: "100%",
+                            boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+                            textAlign: "center",
+                        }}
+                    >
+                        <div style={{ fontSize: 26, fontWeight: 800, color: "#1d2530", marginBottom: 8 }}>Clear the whole drawing?</div>
+                        <div style={{ fontSize: 17, color: "#6b7280", marginBottom: 22 }}>This erases everything on the paper. You can still Undo after.</div>
+                        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                            <button onClick={() => setConfirmClear(false)} style={bigBtn("#9aa5b1")}>
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    ed.clearAll();
+                                    setConfirmClear(false);
+                                }}
+                                style={bigBtn("#e11d2a")}
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </>

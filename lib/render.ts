@@ -1,12 +1,12 @@
-import { type Shape, shapeCells, shapeCorners, rotateHandlePoint, resizeHandlePoint, CELL, CANVAS_W, CANVAS_H } from "@/lib/shapes";
+import { type Shape, shapeCells, shapeCorners, rotateHandlePoint, CELL, CANVAS_W, CANVAS_H } from "@/lib/shapes";
 
-export type Nameplate = { student: string; date: string };
+export type Nameplate = { title: string; student: string; date: string };
 
-/** Kid-handwriting font stack. Uses Apple's built-in handwriting faces (iPad/Mac) so no web font is needed. */
-export const HAND_FONT = "'Bradley Hand', 'Noteworthy', 'Chalkboard SE', 'Comic Sans MS', cursive";
+/** Kid-handwriting font stack. 'For Kids 2' is bundled; the rest are native fallbacks. */
+export const HAND_FONT = "'For Kids 2', 'Bradley Hand', 'Chalkboard SE', 'Comic Sans MS', cursive";
 
 /** Per-block grid line color that stays visible on both dark and light fills. */
-function gridStroke(color: string): string {
+export function gridStroke(color: string): string {
     let hex = color.replace("#", "");
     if (hex.length === 3)
         hex = hex
@@ -26,23 +26,30 @@ export function paintScene(ctx: CanvasRenderingContext2D, shapes: Shape[], namep
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    if (nameplate && (nameplate.student.trim() || nameplate.date)) {
+    if (nameplate && (nameplate.title.trim() || nameplate.student.trim() || nameplate.date)) {
         ctx.save();
         ctx.textBaseline = "alphabetic";
-        ctx.fillStyle = "#1d2530";
-        ctx.font = `700 34px ${HAND_FONT}`;
-        ctx.textAlign = "left";
-        if (nameplate.student.trim()) ctx.fillText(nameplate.student, 40, 60);
-        ctx.fillStyle = "#6b7280";
-        ctx.font = "600 22px -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif";
+        // title on the top-left
+        if (nameplate.title.trim()) {
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#1d2530";
+            ctx.font = `700 30px ${HAND_FONT}`;
+            ctx.fillText(nameplate.title, 30, 42);
+        }
+        // student name + date on the top-right
         ctx.textAlign = "right";
-        if (nameplate.date) ctx.fillText(nameplate.date, CANVAS_W - 40, 56);
-        ctx.strokeStyle = "#e2e6ee";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(40, 78);
-        ctx.lineTo(CANVAS_W - 40, 78);
-        ctx.stroke();
+        let rx = CANVAS_W - 30;
+        if (nameplate.date) {
+            ctx.fillStyle = "#9aa5b1";
+            ctx.font = `700 17px ${HAND_FONT}`;
+            ctx.fillText(nameplate.date, rx, 40);
+            rx -= ctx.measureText(nameplate.date).width + 14;
+        }
+        if (nameplate.student.trim()) {
+            ctx.fillStyle = "#1d2530";
+            ctx.font = `700 21px ${HAND_FONT}`;
+            ctx.fillText(nameplate.student, rx, 40);
+        }
         ctx.restore();
     }
 
@@ -61,10 +68,10 @@ export function paintScene(ctx: CanvasRenderingContext2D, shapes: Shape[], namep
 
 /** Draw the selection outline + resize and rotate handles, rotated to follow the shape (editor only). */
 export function paintSelection(ctx: CanvasRenderingContext2D, s: Shape, cell = CELL) {
-    const [tl, tr, br, bl] = shapeCorners(s);
+    const corners = shapeCorners(s);
+    const [tl, tr, br, bl] = corners;
     const topMid: [number, number] = [(tl[0] + tr[0]) / 2, (tl[1] + tr[1]) / 2];
     const rot = rotateHandlePoint(s, cell);
-    const rez = resizeHandlePoint(s);
     ctx.save();
     ctx.strokeStyle = "#0aa5ff";
     ctx.lineWidth = 3;
@@ -90,12 +97,14 @@ export function paintSelection(ctx: CanvasRenderingContext2D, s: Shape, cell = C
     ctx.beginPath();
     ctx.arc(rot[0], rot[1], cell * 0.32, 0, Math.PI * 2);
     ctx.fill();
-    // resize grip at the (rotated) bottom-right corner
-    const hs = cell * 1.5;
-    ctx.fillStyle = "#0aa5ff";
-    ctx.fillRect(rez[0] - hs / 2, rez[1] - hs / 2, hs, hs);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(rez[0] - hs / 2 + 4, rez[1] - hs / 2 + 4, hs - 8, hs - 8);
+    // resize grips at all four (rotated) corners
+    const hs = cell * 1.4;
+    for (const [gx, gy] of corners) {
+        ctx.fillStyle = "#0aa5ff";
+        ctx.fillRect(gx - hs / 2, gy - hs / 2, hs, hs);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(gx - hs / 2 + 4, gy - hs / 2 + 4, hs - 8, hs - 8);
+    }
     ctx.restore();
 }
 

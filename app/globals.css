@@ -1,3 +1,11 @@
+/* Kid handwriting font (For Kids 2, demo - personal use). Bundled so the export matches. */
+@font-face {
+    font-family: "For Kids 2";
+    src: url("/fonts/ForKids2.ttf") format("truetype");
+    font-weight: 400 900;
+    font-display: swap;
+}
+
 * {
     box-sizing: border-box;
     padding: 0;
@@ -14,7 +22,14 @@ body {
 body {
     background: #e8eaf0;
     color: #1d1d1f;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family:
+        "For Kids 2",
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "Segoe UI",
+        "Helvetica Neue",
+        sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* keep Apple Pencil / touch drawing from scrolling or selecting the page */
@@ -23,7 +38,22 @@ body {
     user-select: none;
 }
 
+/* form controls don't inherit font-family by default - force it so the whole app uses the kid font */
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
 input {
     -webkit-user-select: text;
     user-select: text;
+}
+
+/* auto-fit the name inputs to their text so the wide handwriting font never gets clipped */
+.autosize {
+    field-sizing: content;
+    min-width: 3ch;
+    max-width: 100%;
 }
