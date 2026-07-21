@@ -12,6 +12,11 @@ import {
     newShape,
     movedShape,
     resizedShape,
+    newFreeShape,
+    addFreeCell,
+    rotatedShape,
+    occupiedCells,
+    floodFill,
     exportFilename,
     dateLabel,
     defaultBox,
@@ -25,25 +30,27 @@ import {
 const mk = (type: ShapeType, over: Partial<Shape> = {}): Shape => ({ id: "t", type, x: 100, y: 100, w: 128, h: 128, color: "#111", ...over });
 
 describe("library + search", () => {
-    it("has all 13 requested shapes", () => {
+    it("has all requested shapes (trapezoid, not pentagon)", () => {
         const types = SHAPE_LIBRARY.map((s) => s.type);
         for (const t of [
             "square",
             "rectangle",
             "circle",
             "parallelogram",
+            "trapezoid",
             "triangle",
-            "pentagon",
             "hexagon",
             "octagon",
             "moon",
             "star",
+            "asterisk",
             "line-solid",
             "line-dash",
             "line-dot",
         ]) {
             expect(types).toContain(t as ShapeType);
         }
+        expect(types).not.toContain("pentagon" as ShapeType);
     });
     it("searches by name, type, and keyword", () => {
         expect(searchShapes("star").map((s) => s.type)).toContain("star");
@@ -80,7 +87,7 @@ describe("geometry", () => {
     });
     it("shapeVerts: polygons have the right vertex count, curves are null", () => {
         expect(shapeVerts(mk("triangle"))).toHaveLength(3);
-        expect(shapeVerts(mk("pentagon"))).toHaveLength(5);
+        expect(shapeVerts(mk("trapezoid"))).toHaveLength(4);
         expect(shapeVerts(mk("hexagon"))).toHaveLength(6);
         expect(shapeVerts(mk("octagon"))).toHaveLength(8);
         expect(shapeVerts(mk("star"))).toHaveLength(10);
@@ -120,6 +127,63 @@ describe("pixelation (shapeCells)", () => {
         const dot = shapeCells(mk("line-dot", { w: 200, h: 200 })).length;
         expect(dash).toBeLessThan(solid);
         expect(dot).toBeLessThan(solid);
+    });
+});
+
+describe("rotation", () => {
+    it("rotatedShape snaps to 15-degree steps and normalizes", () => {
+        expect(rotatedShape(mk("square"), 7).angle).toBe(0);
+        expect(rotatedShape(mk("square"), 44).angle).toBe(45);
+        expect(rotatedShape(mk("square"), -15).angle).toBe(345);
+        expect(rotatedShape(mk("square"), 360).angle).toBe(0);
+    });
+    it("a rotated square keeps roughly the same block count", () => {
+        const flat = shapeCells(mk("square", { x: 0, y: 0, w: CELL * 6, h: CELL * 6 })).length;
+        const spun = shapeCells(mk("square", { x: 0, y: 0, w: CELL * 6, h: CELL * 6, angle: 45 })).length;
+        expect(spun).toBeGreaterThan(flat * 0.6);
+    });
+    it("a rotated line is no longer purely horizontal", () => {
+        const spun = shapeCells(mk("line-solid", { x: 0, y: 0, w: CELL * 10, h: CELL * 10, angle: 90 }));
+        const ys = new Set(spun.map(([, y]) => y));
+        expect(ys.size).toBeGreaterThan(1); // vertical line spans multiple rows
+    });
+});
+
+describe("freehand", () => {
+    it("newFreeShape starts empty and paints deduped cells", () => {
+        let s = newFreeShape("f1", "#f00");
+        expect(shapeCells(s)).toHaveLength(0);
+        s = addFreeCell(s, 2, 3);
+        s = addFreeCell(s, 2, 3); // dupe ignored
+        s = addFreeCell(s, 4, 5);
+        expect(shapeCells(s)).toHaveLength(2);
+    });
+    it("freehand strokes are not selectable via hitTest", () => {
+        let s = newFreeShape("f1", "#f00");
+        s = addFreeCell(s, 1, 1);
+        expect(hitTest([s], CELL * 1.5, CELL * 1.5)).toBeNull();
+    });
+});
+
+describe("paint bucket (flood fill)", () => {
+    it("fills the empty interior bounded by an outline", () => {
+        // hollow 5x5 box outline; interior 3x3 is empty
+        const occ = new Set<string>();
+        for (let i = 0; i < 5; i++) {
+            occ.add(`${i},0`);
+            occ.add(`${i},4`);
+            occ.add(`0,${i}`);
+            occ.add(`4,${i}`);
+        }
+        const cells = floodFill(occ, 2, 2);
+        expect(cells).toHaveLength(9); // 3x3 interior, does not leak past the outline
+    });
+    it("returns nothing when the clicked cell is already painted", () => {
+        expect(floodFill(new Set<string>(["3,3"]), 3, 3)).toHaveLength(0);
+    });
+    it("occupiedCells collects every painted cell in the scene", () => {
+        const sq = mk("square", { x: 0, y: 0, w: CELL * 2, h: CELL * 2 });
+        expect(occupiedCells([sq]).size).toBe(4);
     });
 });
 

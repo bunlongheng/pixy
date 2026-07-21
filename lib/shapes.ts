@@ -7,15 +7,24 @@ export type ShapeType =
     | "circle"
     | "parallelogram"
     | "triangle"
-    | "pentagon"
+    | "trapezoid"
     | "hexagon"
     | "octagon"
     | "moon"
     | "star"
     | "asterisk"
+    | "heart"
+    | "diamond"
+    | "cone"
+    | "doughnut"
+    | "leaf"
+    | "tree"
+    | "cloud"
+    | "spider"
     | "line-solid"
     | "line-dash"
-    | "line-dot";
+    | "line-dot"
+    | "free";
 
 export interface Shape {
     id: string;
@@ -25,6 +34,8 @@ export interface Shape {
     w: number;
     h: number;
     color: string;
+    angle?: number; // rotation in degrees, clockwise; default 0
+    cells?: Cell[]; // painted grid cells for freehand ("free") strokes
 }
 
 export type Cell = [number, number]; // grid coords (in CELL units)
@@ -36,6 +47,10 @@ export const CELL = 20;
 /** Logical canvas size (the white sheet). Fixed so exports are consistent. */
 export const CANVAS_W = 1280;
 export const CANVAS_H = 896;
+
+/** Grid dimensions in whole blocks. */
+export const GRID_W = Math.ceil(CANVAS_W / CELL);
+export const GRID_H = Math.ceil(CANVAS_H / CELL);
 
 /** Kid-friendly paint palette. */
 export const PALETTE = ["#000000", "#ffffff", "#e11d2a", "#ff7a00", "#ffd400", "#2ecc40", "#0aa5ff", "#0047ab", "#8e44ec", "#ff5fa2", "#8b5a2b", "#9aa5b1"];
@@ -52,12 +67,20 @@ export const SHAPE_LIBRARY: LibEntry[] = [
     { type: "circle", name: "Circle", keywords: ["round", "ball", "dot", "sun"] },
     { type: "triangle", name: "Triangle", keywords: ["3", "roof", "arrow"] },
     { type: "parallelogram", name: "Parallelogram", keywords: ["slant", "skew", "rhombus"] },
-    { type: "pentagon", name: "Pentagon", keywords: ["5", "polygon"] },
+    { type: "trapezoid", name: "Trapezoid", keywords: ["4", "polygon", "trapezium", "bucket"] },
     { type: "hexagon", name: "Hexagon", keywords: ["6", "polygon", "honeycomb"] },
     { type: "octagon", name: "Octagon", keywords: ["8", "polygon", "stop"] },
     { type: "star", name: "Star", keywords: ["night", "sky", "sparkle"] },
     { type: "asterisk", name: "Asterisk", keywords: ["star", "sparkle", "snowflake", "spokes", "*"] },
     { type: "moon", name: "Moon", keywords: ["crescent", "night", "sky"] },
+    { type: "heart", name: "Heart", keywords: ["love", "valentine"] },
+    { type: "diamond", name: "Diamond", keywords: ["rhombus", "gem", "kite"] },
+    { type: "cone", name: "Cone", keywords: ["ice cream", "traffic", "hat"] },
+    { type: "doughnut", name: "Doughnut", keywords: ["donut", "ring", "torus"] },
+    { type: "leaf", name: "Leaf", keywords: ["plant", "nature"] },
+    { type: "tree", name: "Tree", keywords: ["plant", "nature", "pine"] },
+    { type: "cloud", name: "Cloud", keywords: ["sky", "weather"] },
+    { type: "spider", name: "Spider", keywords: ["bug", "insect", "web"] },
     { type: "line-solid", name: "Solid Line", keywords: ["line", "stroke", "bar"] },
     { type: "line-dash", name: "Dashed Line", keywords: ["line", "dash", "dashed"] },
     { type: "line-dot", name: "Dotted Line", keywords: ["line", "dot", "dotted"] },
@@ -76,7 +99,16 @@ export const snap = (v: number, cell = CELL): number => Math.round(v / cell) * c
 /** Clamp helper. */
 export const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
-const POLY_SIDES: Partial<Record<ShapeType, number>> = { pentagon: 5, hexagon: 6, octagon: 8 };
+/** Rotate point (px,py) around center (cx,cy) by `rad` radians. */
+function rotatePt(px: number, py: number, cx: number, cy: number, rad: number): Pt {
+    const c = Math.cos(rad);
+    const sn = Math.sin(rad);
+    const dx = px - cx;
+    const dy = py - cy;
+    return [cx + dx * c - dy * sn, cy + dx * sn + dy * c];
+}
+
+const POLY_SIDES: Partial<Record<ShapeType, number>> = { hexagon: 6, octagon: 8 };
 
 /** Regular n-gon vertices inscribed in the bbox, flat-ish top. */
 function regularPolygon(x: number, y: number, w: number, h: number, sides: number): Pt[] {
@@ -136,10 +168,32 @@ export function shapeVerts(s: Shape): Pt[] | null {
                 [s.x + s.w, s.y + s.h],
                 [s.x, s.y + s.h],
             ];
-        case "pentagon":
+        case "trapezoid": {
+            const off = s.w * 0.22;
+            return [
+                [s.x + off, s.y],
+                [s.x + s.w - off, s.y],
+                [s.x + s.w, s.y + s.h],
+                [s.x, s.y + s.h],
+            ];
+        }
         case "hexagon":
         case "octagon":
             return regularPolygon(s.x, s.y, s.w, s.h, POLY_SIDES[s.type]!);
+        case "diamond":
+            return [
+                [s.x + s.w / 2, s.y],
+                [s.x + s.w, s.y + s.h / 2],
+                [s.x + s.w / 2, s.y + s.h],
+                [s.x, s.y + s.h / 2],
+            ];
+        case "cone":
+            return [
+                [s.x + s.w * 0.42, s.y],
+                [s.x + s.w * 0.58, s.y],
+                [s.x + s.w, s.y + s.h],
+                [s.x, s.y + s.h],
+            ];
         case "star":
             return starPolygon(s.x, s.y, s.w, s.h);
         default:
@@ -171,39 +225,88 @@ export function pointInShape(s: Shape, px: number, py: number): boolean {
     const verts = shapeVerts(s);
     if (verts) return pointInPolygon(px, py, verts);
     if (s.type === "circle") return inEllipse(px, py, s.x + s.w / 2, s.y + s.h / 2, s.w / 2, s.h / 2);
+    const cx = s.x + s.w / 2;
+    const cy = s.y + s.h / 2;
     if (s.type === "moon") {
-        const cx = s.x + s.w / 2;
-        const cy = s.y + s.h / 2;
         const outer = inEllipse(px, py, cx, cy, s.w / 2, s.h / 2);
         // carve a second disc offset to the right to make a crescent
         const inner = inEllipse(px, py, cx + s.w * 0.32, cy, s.w * 0.42, s.h * 0.46);
         return outer && !inner;
     }
-    return false; // lines handled separately
+    if (s.type === "doughnut") {
+        return inEllipse(px, py, cx, cy, s.w / 2, s.h / 2) && !inEllipse(px, py, cx, cy, s.w * 0.22, s.h * 0.22);
+    }
+    if (s.type === "heart") {
+        const lobeR = s.w * 0.26;
+        const ly = cy - s.h * 0.14;
+        if (inEllipse(px, py, cx - s.w * 0.23, ly, lobeR, lobeR)) return true;
+        if (inEllipse(px, py, cx + s.w * 0.23, ly, lobeR, lobeR)) return true;
+        return pointInPolygon(px, py, [
+            [cx - s.w * 0.49, ly],
+            [cx + s.w * 0.49, ly],
+            [cx, s.y + s.h * 0.95],
+        ]);
+    }
+    if (s.type === "leaf") {
+        // vertical lens: two circles offset left/right, intersection is a pointed upright leaf
+        return inEllipse(px, py, cx - s.w * 0.55, cy, s.w * 0.68, s.h * 0.68) && inEllipse(px, py, cx + s.w * 0.55, cy, s.w * 0.68, s.h * 0.68);
+    }
+    if (s.type === "tree") {
+        const foliage: Pt[] = [
+            [cx, s.y],
+            [s.x + s.w * 0.92, s.y + s.h * 0.72],
+            [s.x + s.w * 0.08, s.y + s.h * 0.72],
+        ];
+        if (pointInPolygon(px, py, foliage)) return true;
+        return px >= cx - s.w * 0.1 && px <= cx + s.w * 0.1 && py >= s.y + s.h * 0.68 && py <= s.y + s.h; // trunk
+    }
+    if (s.type === "cloud") {
+        const bumps: [number, number, number][] = [
+            [cx - s.w * 0.26, cy + s.h * 0.02, s.w * 0.2],
+            [cx, cy - s.h * 0.16, s.w * 0.27],
+            [cx + s.w * 0.26, cy + s.h * 0.02, s.w * 0.2],
+        ];
+        for (const [bx, by, r] of bumps) if (inEllipse(px, py, bx, by, r, r)) return true;
+        return px >= s.x + s.w * 0.08 && px <= s.x + s.w * 0.92 && py >= cy && py <= cy + s.h * 0.32; // flat base
+    }
+    return false; // lines / spider handled separately
 }
 
 function lineCells(s: Shape, cell: number): Cell[] {
-    // A straight horizontal line down the middle of its bbox, one block thick.
-    const cy = Math.floor((s.y + s.h / 2) / cell);
-    const c0 = Math.floor(s.x / cell);
-    const c1 = Math.ceil((s.x + s.w) / cell);
+    // A straight line through the centre of its bbox, one block thick, at `angle`.
+    const rad = ((s.angle ?? 0) * Math.PI) / 180;
+    const ccx = s.x + s.w / 2;
+    const ccy = s.y + s.h / 2;
+    const half = s.w / 2;
+    const ax = ccx - half * Math.cos(rad);
+    const ay = ccy - half * Math.sin(rad);
+    const bx = ccx + half * Math.cos(rad);
+    const by = ccy + half * Math.sin(rad);
+    const steps = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / cell));
     const cells: Cell[] = [];
-    let i = 0;
-    for (let cx = c0; cx < c1; cx++, i++) {
+    const seen = new Set<string>();
+    for (let i = 0; i <= steps; i++) {
         // dash: draw 2, skip 1; dot: draw 1, skip 1
         if (s.type === "line-dash" && i % 3 === 2) continue;
         if (s.type === "line-dot" && i % 2 === 1) continue;
-        cells.push([cx, cy]);
+        const t = i / steps;
+        const gx = Math.floor((ax + (bx - ax) * t) / cell);
+        const gy = Math.floor((ay + (by - ay) * t) / cell);
+        const key = `${gx},${gy}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cells.push([gx, gy]);
     }
     return cells;
 }
 
 function asteriskCells(s: Shape, cell: number): Cell[] {
-    // Six spokes from the centre, one block thick - a pixel asterisk / snowflake.
+    // Six spokes 60 deg apart with a vertical arm - reads as a proper asterisk.
     const cx = s.x + s.w / 2;
     const cy = s.y + s.h / 2;
     const rx = s.w / 2 - cell / 2;
     const ry = s.h / 2 - cell / 2;
+    const base = ((s.angle ?? 0) * Math.PI) / 180;
     const cells: Cell[] = [];
     const seen = new Set<string>();
     const push = (px: number, py: number) => {
@@ -215,8 +318,8 @@ function asteriskCells(s: Shape, cell: number): Cell[] {
             cells.push([gx, gy]);
         }
     };
-    for (const deg of [0, 60, 120, 180, 240, 300]) {
-        const rad = (deg * Math.PI) / 180;
+    for (const deg of [30, 90, 150, 210, 270, 330]) {
+        const rad = base + (deg * Math.PI) / 180;
         const ex = cx + rx * Math.cos(rad);
         const ey = cy + ry * Math.sin(rad);
         const steps = Math.max(1, Math.round(Math.hypot(ex - cx, ey - cy) / cell));
@@ -228,23 +331,114 @@ function asteriskCells(s: Shape, cell: number): Cell[] {
     return cells;
 }
 
+function spiderCells(s: Shape, cell: number): Cell[] {
+    // A round two-part body with eight legs radiating out - reads as a spider.
+    const cx = s.x + s.w / 2;
+    const cy = s.y + s.h / 2;
+    const base = ((s.angle ?? 0) * Math.PI) / 180;
+    const cells: Cell[] = [];
+    const seen = new Set<string>();
+    const push = (px: number, py: number) => {
+        const gx = Math.floor(px / cell);
+        const gy = Math.floor(py / cell);
+        const key = `${gx},${gy}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            cells.push([gx, gy]);
+        }
+    };
+    // body: head + abdomen ellipses
+    const bodies: [number, number, number, number][] = [
+        [cx, cy - s.h * 0.1, s.w * 0.12, s.h * 0.12],
+        [cx, cy + s.h * 0.12, s.w * 0.18, s.h * 0.2],
+    ];
+    for (let gy = Math.floor(s.y / cell); gy < Math.ceil((s.y + s.h) / cell); gy++) {
+        for (let gx = Math.floor(s.x / cell); gx < Math.ceil((s.x + s.w) / cell); gx++) {
+            const mx = gx * cell + cell / 2;
+            const my = gy * cell + cell / 2;
+            for (const [bx, by, brx, bry] of bodies) if (inEllipse(mx, my, bx, by, brx, bry)) push(mx, my);
+        }
+    }
+    // eight legs, four per side
+    const legLen = Math.min(s.w, s.h) * 0.6;
+    for (const deg of [150, 170, 190, 210, 30, 10, 350, 330]) {
+        const rad = base + (deg * Math.PI) / 180;
+        const ex = cx + legLen * Math.cos(rad);
+        const ey = cy + legLen * Math.sin(rad);
+        const steps = Math.max(1, Math.round(Math.hypot(ex - cx, ey - cy) / cell));
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            push(cx + (ex - cx) * t, cy + (ey - cy) * t);
+        }
+    }
+    return cells;
+}
+
 /** Rasterize a shape to Minecraft blocks: the grid cells it covers. Pure. */
 export function shapeCells(s: Shape, cell = CELL): Cell[] {
+    if (s.type === "free") return s.cells ?? [];
     if (s.type === "line-solid" || s.type === "line-dash" || s.type === "line-dot") return lineCells(s, cell);
     if (s.type === "asterisk") return asteriskCells(s, cell);
-    const c0x = Math.floor(s.x / cell);
-    const c0y = Math.floor(s.y / cell);
-    const c1x = Math.ceil((s.x + s.w) / cell);
-    const c1y = Math.ceil((s.y + s.h) / cell);
+    if (s.type === "spider") return spiderCells(s, cell);
+    const ang = ((s.angle ?? 0) * Math.PI) / 180;
+    const ccx = s.x + s.w / 2;
+    const ccy = s.y + s.h / 2;
+    // When rotated, sample the circle that circumscribes the box so nothing clips.
+    const R = ang ? Math.hypot(s.w, s.h) / 2 : 0;
+    const c0x = Math.floor((ang ? ccx - R : s.x) / cell);
+    const c0y = Math.floor((ang ? ccy - R : s.y) / cell);
+    const c1x = Math.ceil((ang ? ccx + R : s.x + s.w) / cell);
+    const c1y = Math.ceil((ang ? ccy + R : s.y + s.h) / cell);
     const cells: Cell[] = [];
     for (let cy = c0y; cy < c1y; cy++) {
         for (let cx = c0x; cx < c1x; cx++) {
-            const midX = cx * cell + cell / 2;
-            const midY = cy * cell + cell / 2;
+            let midX = cx * cell + cell / 2;
+            let midY = cy * cell + cell / 2;
+            if (ang) [midX, midY] = rotatePt(midX, midY, ccx, ccy, -ang);
             if (pointInShape(s, midX, midY)) cells.push([cx, cy]);
         }
     }
     return cells;
+}
+
+/** Set of "cx,cy" keys for every painted cell in the scene (for flood fill / occupancy). */
+export function occupiedCells(shapes: Shape[], cell = CELL): Set<string> {
+    const occ = new Set<string>();
+    for (const s of shapes) for (const [x, y] of shapeCells(s, cell)) occ.add(`${x},${y}`);
+    return occ;
+}
+
+/**
+ * Flood-fill the connected empty region from (cx,cy), bounded by occupied cells.
+ * Returns [] if the region is NOT enclosed (it reaches the paper edge) so the bucket
+ * never floods the whole sheet - you can only fill a closed area.
+ */
+export function floodFill(occupied: Set<string>, cx: number, cy: number): Cell[] {
+    const key = (x: number, y: number) => `${x},${y}`;
+    if (cx < 0 || cy < 0 || cx >= GRID_W || cy >= GRID_H || occupied.has(key(cx, cy))) return [];
+    const filled: Cell[] = [];
+    const seen = new Set<string>([key(cx, cy)]);
+    const stack: Cell[] = [[cx, cy]];
+    let reachedEdge = false;
+    while (stack.length) {
+        const [x, y] = stack.pop()!;
+        if (x === 0 || y === 0 || x === GRID_W - 1 || y === GRID_H - 1) reachedEdge = true;
+        filled.push([x, y]);
+        const nbrs: Cell[] = [
+            [x + 1, y],
+            [x - 1, y],
+            [x, y + 1],
+            [x, y - 1],
+        ];
+        for (const [nx, ny] of nbrs) {
+            if (nx < 0 || ny < 0 || nx >= GRID_W || ny >= GRID_H) continue;
+            const k = key(nx, ny);
+            if (seen.has(k) || occupied.has(k)) continue;
+            seen.add(k);
+            stack.push([nx, ny]);
+        }
+    }
+    return reachedEdge ? [] : filled; // open to the paper edge = not enclosed, don't fill
 }
 
 /** Does the shape's pixel area contain this canvas point? (selection/paint hit test) */
@@ -254,9 +448,10 @@ export function shapeContains(s: Shape, px: number, py: number, cell = CELL): bo
     return shapeCells(s, cell).some(([x, y]) => x === cx && y === cy);
 }
 
-/** Topmost shape under a point (last drawn wins), or null. */
+/** Topmost shape under a point (last drawn wins), or null. Freehand strokes are background paint, not selectable. */
 export function hitTest(shapes: Shape[], px: number, py: number, cell = CELL): Shape | null {
     for (let i = shapes.length - 1; i >= 0; i--) {
+        if (shapes[i].type === "free") continue;
         if (shapeContains(shapes[i], px, py, cell)) return shapes[i];
     }
     return null;
@@ -266,7 +461,55 @@ export function hitTest(shapes: Shape[], px: number, py: number, cell = CELL): S
 export function defaultBox(type: ShapeType): { w: number; h: number } {
     if (type === "rectangle") return { w: CELL * 13, h: CELL * 8 };
     if (type === "line-solid" || type === "line-dash" || type === "line-dot") return { w: CELL * 13, h: CELL * 4 };
+    if (type === "asterisk" || type === "star") return { w: CELL * 11, h: CELL * 11 };
+    if (type === "tree") return { w: CELL * 11, h: CELL * 14 };
+    if (type === "leaf") return { w: CELL * 10, h: CELL * 14 };
+    if (type === "cloud") return { w: CELL * 14, h: CELL * 9 };
+    if (type === "heart" || type === "spider" || type === "doughnut") return { w: CELL * 13, h: CELL * 13 };
     return { w: CELL * 9, h: CELL * 9 };
+}
+
+/** A fresh empty freehand stroke in the given color. */
+export function newFreeShape(id: string, color: string): Shape {
+    return { id, type: "free", x: 0, y: 0, w: 0, h: 0, color, cells: [] };
+}
+
+/** Append a grid cell to a freehand stroke (deduped). Pure. */
+export function addFreeCell(s: Shape, cx: number, cy: number): Shape {
+    const cells = s.cells ?? [];
+    if (cells.some(([x, y]) => x === cx && y === cy)) return s;
+    return { ...s, cells: [...cells, [cx, cy]] };
+}
+
+/** Set a shape's rotation, snapped to 15-degree steps and normalized to [0,360). */
+export function rotatedShape(s: Shape, deg: number): Shape {
+    const snapped = Math.round(deg / 15) * 15;
+    return { ...s, angle: ((snapped % 360) + 360) % 360 };
+}
+
+/** The four bbox corners [TL, TR, BR, BL], rotated by the shape's angle around its center. */
+export function shapeCorners(s: Shape): [Pt, Pt, Pt, Pt] {
+    const rad = ((s.angle ?? 0) * Math.PI) / 180;
+    const cx = s.x + s.w / 2;
+    const cy = s.y + s.h / 2;
+    return [
+        rotatePt(s.x, s.y, cx, cy, rad),
+        rotatePt(s.x + s.w, s.y, cx, cy, rad),
+        rotatePt(s.x + s.w, s.y + s.h, cx, cy, rad),
+        rotatePt(s.x, s.y + s.h, cx, cy, rad),
+    ];
+}
+
+/** Center of the rotate grip (above the shape's top edge), rotated with the shape. */
+export function rotateHandlePoint(s: Shape, cell = CELL): Pt {
+    const rad = ((s.angle ?? 0) * Math.PI) / 180;
+    return rotatePt(s.x + s.w / 2, s.y - cell * 2, s.x + s.w / 2, s.y + s.h / 2, rad);
+}
+
+/** Center of the resize grip (bottom-right corner), rotated with the shape. */
+export function resizeHandlePoint(s: Shape): Pt {
+    const rad = ((s.angle ?? 0) * Math.PI) / 180;
+    return rotatePt(s.x + s.w, s.y + s.h, s.x + s.w / 2, s.y + s.h / 2, rad);
 }
 
 /** Build a new shape centered at (cx, cy), snapped to the grid and kept on-canvas. */

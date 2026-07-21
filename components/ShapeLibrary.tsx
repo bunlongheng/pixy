@@ -1,9 +1,9 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { type ShapeType, type Shape, shapeCells, searchShapes } from "@/lib/shapes";
+import { useRef, useEffect } from "react";
+import { type ShapeType, type Shape, shapeCells, SHAPE_LIBRARY } from "@/lib/shapes";
 
-/** Tiny pixelated preview of a shape type - reuses the real rasterizer. */
-function MiniShape({ type }: { type: ShapeType }) {
+/** Tiny pixelated preview of a shape type - reuses the real rasterizer, in the live color. */
+function MiniShape({ type, color }: { type: ShapeType; color: string }) {
     const ref = useRef<HTMLCanvasElement>(null);
     useEffect(() => {
         const c = ref.current;
@@ -11,38 +11,25 @@ function MiniShape({ type }: { type: ShapeType }) {
         const ctx = c.getContext("2d");
         if (!ctx) return;
         const cell = 6;
-        const s: Shape = { id: "p", type, x: 6, y: 6, w: 36, h: 36, color: "#3b82f6" };
+        // rectangle and lines read as wide bars; everything else fills the square preview.
+        const box =
+            type === "rectangle"
+                ? { x: 3, y: 13, w: 42, h: 22 }
+                : type === "line-solid" || type === "line-dash" || type === "line-dot"
+                  ? { x: 3, y: 6, w: 42, h: 36 }
+                  : { x: 6, y: 6, w: 36, h: 36 };
+        const s: Shape = { id: "p", type, ...box, color };
         ctx.clearRect(0, 0, 48, 48);
-        ctx.fillStyle = s.color;
+        ctx.fillStyle = color === "#ffffff" ? "#e5e9f0" : color; // white would be invisible on white
         for (const [cx, cy] of shapeCells(s, cell)) ctx.fillRect(cx * cell, cy * cell, cell, cell);
-    }, [type]);
+    }, [type, color]);
     return <canvas ref={ref} width={48} height={48} aria-hidden style={{ width: 40, height: 40, imageRendering: "pixelated" }} />;
 }
 
-export function ShapeLibrary({ onAdd }: { onAdd: (type: ShapeType) => void }) {
-    const [query, setQuery] = useState("");
-    const results = searchShapes(query);
-
+export function ShapeLibrary({ onAdd, color }: { onAdd: (type: ShapeType) => void; color: string }) {
     return (
         <section aria-label="Shape library" style={{ display: "flex", flexDirection: "column", gap: 10, height: "100%", minHeight: 0 }}>
-            <label htmlFor="shape-search" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", color: "#6b7280" }}>
-                Shapes
-            </label>
-            <input
-                id="shape-search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search shapes…"
-                style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 0,
-                    border: "1.5px solid #d7dbe3",
-                    background: "white",
-                    fontSize: 14,
-                    outline: "none",
-                }}
-            />
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", color: "#6b7280" }}>Shapes</span>
             <div
                 style={{
                     overflowY: "auto",
@@ -54,7 +41,7 @@ export function ShapeLibrary({ onAdd }: { onAdd: (type: ShapeType) => void }) {
                     minHeight: 0,
                 }}
             >
-                {results.map((s) => (
+                {SHAPE_LIBRARY.map((s) => (
                     <button
                         key={s.type}
                         onClick={() => onAdd(s.type)}
@@ -76,11 +63,10 @@ export function ShapeLibrary({ onAdd }: { onAdd: (type: ShapeType) => void }) {
                         onPointerUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
                         onPointerLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                     >
-                        <MiniShape type={s.type} />
+                        <MiniShape type={s.type} color={color} />
                         <span style={{ fontSize: 10.5, fontWeight: 600, color: "#4b5563", textAlign: "center", lineHeight: 1.1 }}>{s.name}</span>
                     </button>
                 ))}
-                {results.length === 0 && <p style={{ fontSize: 12, color: "#9aa5b1", gridColumn: "1 / -1", padding: 8 }}>No shapes match “{query}”.</p>}
             </div>
         </section>
     );

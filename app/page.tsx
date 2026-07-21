@@ -6,12 +6,14 @@ import { dateLabel, type Shape } from "@/lib/shapes";
 import { TopBar } from "@/components/TopBar";
 import { ShapeLibrary } from "@/components/ShapeLibrary";
 import { ColorPalette } from "@/components/ColorPalette";
-import { Canvas } from "@/components/Canvas";
+import { Canvas, type Mode } from "@/components/Canvas";
+import { HAND_FONT } from "@/lib/render";
 
-export default function PixyShapesPage() {
+export default function PixyPage() {
     const ed = useEditor();
     const [toast, setToast] = useState("");
     const [today, setToday] = useState("");
+    const [mode, setMode] = useState<Mode>("select");
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const edRef = useRef(ed);
     edRef.current = ed;
@@ -52,6 +54,16 @@ export default function PixyShapesPage() {
         if (ed.selectedId) ed.recolor(ed.selectedId, c);
     };
 
+    const toggleMode = (m: Mode) => {
+        setMode((cur) => (cur === m ? "select" : m));
+        ed.setSelectedId(null);
+    };
+
+    const addShape = (type: Parameters<typeof ed.addShape>[0]) => {
+        setMode("select"); // dropping a shape returns to select so it can be moved/rotated
+        ed.addShape(type);
+    };
+
     const doExport = async () => {
         if (ed.shapes.length === 0) {
             setToast("Add a shape first!");
@@ -67,22 +79,28 @@ export default function PixyShapesPage() {
         setTimeout(() => setToast(""), 2600);
     };
 
-    const btn: React.CSSProperties = {
-        padding: "9px 14px",
+    // Big, flat white-on-color buttons: no icons, no borders. Active tools darken.
+    const bigBtn = (bg: string, active = false): React.CSSProperties => ({
+        padding: "12px 22px",
         borderRadius: 0,
-        border: "2px solid #c3c9d4",
-        background: "white",
-        color: "#374151",
-        fontSize: 13,
-        fontWeight: 800,
+        border: "none",
+        background: bg,
+        color: "white",
+        fontSize: 20,
+        fontWeight: 900,
+        letterSpacing: 0.5,
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+        flexShrink: 0,
         cursor: "pointer",
-    };
+        filter: active ? "brightness(0.78)" : "none",
+    });
 
     return (
         <>
             <style>{`
                 .app { display:flex; flex-direction:column; height:100dvh; }
-                .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 16px; background:#eef1f6; border-bottom:2px solid #d7dbe3; }
+                .toolbar { display:flex; align-items:center; gap:12px; flex-wrap:nowrap; overflow-x:auto; padding:10px 16px; background:#eef1f6; border-bottom:2px solid #d7dbe3; }
                 .stage { flex:1; display:flex; min-height:0; }
                 .library { width:250px; flex-shrink:0; padding:14px; border-right:2px solid #d7dbe3; background:#f2f4f8; overflow:hidden; }
                 .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:18px; overflow:auto; background:#dfe3ea; }
@@ -100,42 +118,62 @@ export default function PixyShapesPage() {
 
                 <div className="toolbar">
                     <ColorPalette color={ed.color} onPick={pickColor} />
-                    <div style={{ flex: 1 }} />
+                    <div style={{ flex: 1, minWidth: 12 }} />
+                    <button
+                        onClick={() => toggleMode("draw")}
+                        aria-pressed={mode === "draw"}
+                        aria-label="Draw freehand"
+                        style={bigBtn("#0aa5ff", mode === "draw")}
+                    >
+                        Draw
+                    </button>
+                    <button
+                        onClick={() => toggleMode("fill")}
+                        aria-pressed={mode === "fill"}
+                        aria-label="Paint bucket fill"
+                        style={bigBtn("#2ecc40", mode === "fill")}
+                    >
+                        Fill
+                    </button>
+                    <button onClick={() => toggleMode("erase")} aria-pressed={mode === "erase"} aria-label="Erase" style={bigBtn("#ff5fa2", mode === "erase")}>
+                        Erase
+                    </button>
                     <button
                         onClick={() => ed.selectedId && ed.removeShape(ed.selectedId)}
                         disabled={!ed.selectedId}
                         aria-label="Delete selected shape"
-                        style={{ ...btn, opacity: ed.selectedId ? 1 : 0.4, cursor: ed.selectedId ? "pointer" : "not-allowed" }}
+                        style={{ ...bigBtn("#e11d2a"), opacity: ed.selectedId ? 1 : 0.4, cursor: ed.selectedId ? "pointer" : "not-allowed" }}
                     >
-                        🗑 Delete
+                        Delete
                     </button>
-                    <button onClick={ed.undo} aria-label="Undo" style={btn} title="Undo (Cmd/Ctrl+Z)">
-                        ↩ Undo
+                    <button onClick={ed.undo} aria-label="Undo" title="Undo (Cmd/Ctrl+Z)" style={bigBtn("#8e44ec")}>
+                        Undo
                     </button>
-                    <button onClick={ed.clearAll} aria-label="Clear canvas" style={btn}>
+                    <button onClick={ed.clearAll} aria-label="Clear canvas" style={bigBtn("#9aa5b1")}>
                         Clear
                     </button>
-                    <button
-                        onClick={doExport}
-                        aria-label="Save to Photos"
-                        style={{ ...btn, background: "#111827", color: "white", border: "2px solid #111827" }}
-                    >
-                        ⬇ Save to Photos
+                    <button onClick={doExport} aria-label="Save to Photos" style={bigBtn("#111827")}>
+                        Save
                     </button>
                 </div>
 
                 <main className="stage">
                     <aside className="library">
-                        <ShapeLibrary onAdd={ed.addShape} />
+                        <ShapeLibrary onAdd={addShape} color={ed.color} />
                     </aside>
                     <div className="canvas-wrap">
                         <div className="paper">
                             <Canvas
                                 shapes={ed.shapes}
                                 selectedId={ed.selectedId}
+                                mode={mode}
                                 onSelect={ed.setSelectedId}
                                 onUpdate={ed.updateShape}
                                 onBeginChange={ed.snapshot}
+                                onStartStroke={ed.startStroke}
+                                onPaint={ed.paintCell}
+                                onErase={ed.eraseCell}
+                                onFill={ed.fill}
                                 canvasRef={canvasRef}
                             />
                             <div className="paper-name">
@@ -149,15 +187,16 @@ export default function PixyShapesPage() {
                                         pointerEvents: "auto",
                                         border: "none",
                                         background: "transparent",
-                                        fontWeight: 800,
-                                        fontSize: "clamp(15px, 2vw, 26px)",
+                                        fontFamily: HAND_FONT,
+                                        fontWeight: 700,
+                                        fontSize: "clamp(17px, 2.2vw, 30px)",
                                         color: "#1d2530",
                                         outline: "none",
                                         padding: 0,
                                         minWidth: 0,
                                     }}
                                 />
-                                <span style={{ fontWeight: 700, fontSize: "clamp(11px, 1.5vw, 20px)", color: "#6b7280", whiteSpace: "nowrap" }}>{today}</span>
+                                <span style={{ fontWeight: 700, fontSize: "clamp(10px, 1.35vw, 18px)", color: "#6b7280", whiteSpace: "nowrap" }}>{today}</span>
                             </div>
                         </div>
                     </div>
