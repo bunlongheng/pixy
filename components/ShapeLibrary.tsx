@@ -30,24 +30,14 @@ function MiniShape({ type, color }: { type: ShapeType; color: string }) {
             ctx.strokeRect(cx * cell + 0.5, cy * cell + 0.5, cell - 1, cell - 1); // per-block grid, like the canvas
         }
     }, [type, color]);
-    return <canvas ref={ref} width={48} height={48} aria-hidden style={{ width: 64, height: 64, imageRendering: "pixelated" }} />;
+    return <canvas ref={ref} width={48} height={48} aria-hidden style={{ width: 46, height: 46, imageRendering: "pixelated" }} />;
 }
 
 export function ShapeLibrary({ onAdd, color }: { onAdd: (type: ShapeType) => void; color: string }) {
     return (
         <section aria-label="Shape library" style={{ display: "flex", flexDirection: "column", gap: 10, height: "100%", minHeight: 0 }}>
             <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", color: "#6b7280" }}>Shapes</span>
-            <div
-                style={{
-                    overflowY: "auto",
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                    paddingRight: 4,
-                    flex: 1,
-                    minHeight: 0,
-                }}
-            >
+            <div className="shape-grid">
                 {SHAPE_LIBRARY.map((s) => (
                     <button
                         key={s.type}
@@ -58,8 +48,8 @@ export function ShapeLibrary({ onAdd, color }: { onAdd: (type: ShapeType) => voi
                             display: "flex",
                             flexDirection: "column",
                             alignItems: "center",
-                            gap: 8,
-                            padding: "16px 8px",
+                            gap: 4,
+                            padding: "8px 4px",
                             borderRadius: 0,
                             border: "1.5px solid #e2e6ee",
                             background: "white",
@@ -71,7 +61,7 @@ export function ShapeLibrary({ onAdd, color }: { onAdd: (type: ShapeType) => voi
                         onPointerLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                     >
                         <MiniShape type={s.type} color={color} />
-                        <span style={{ fontSize: 16, fontWeight: 700, color: "#4b5563", textAlign: "center", lineHeight: 1.1 }}>{s.name}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#4b5563", textAlign: "center", lineHeight: 1.1 }}>{s.name}</span>
                     </button>
                 ))}
             </div>

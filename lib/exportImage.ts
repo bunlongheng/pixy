@@ -21,7 +21,7 @@ export async function exportShapes(shapes: Shape[], drawingName: string, namepla
     const filename = exportFilename(drawingName);
     // make sure the handwriting font is ready so the exported name isn't drawn in a fallback
     try {
-        await document.fonts.load("700 24px 'For Kids 2'");
+        await document.fonts.load("700 24px 'Comic Neue'");
     } catch {
         /* fallback font is fine */
     }

@@ -3,7 +3,7 @@ import jsxA11y from "eslint-plugin-jsx-a11y";
 import tsParser from "@typescript-eslint/parser";
 
 const eslintConfig = [
-    { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "playwright-report/**", "test-results/**"] },
+    { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "playwright-report/**", "test-results/**", "coverage/**"] },
     {
         files: ["**/*.{ts,tsx,js,mjs}"],
         languageOptions: {

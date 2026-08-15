@@ -1,17 +1,16 @@
 import { test, expect } from "@playwright/test";
 
-test("loads with an empty white canvas and the two name fields", async ({ page }) => {
+test("loads with an empty white canvas and no name banner", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("img", { name: "Drawing canvas" })).toBeVisible();
-    await expect(page.getByLabel("Drawing", { exact: true })).toHaveValue("My Drawing");
-    await expect(page.getByLabel("Student name", { exact: true })).toHaveValue("Norden Heng");
+    await expect(page.getByLabel("Drawing title")).toHaveCount(0);
+    await expect(page.getByLabel("Student name")).toHaveCount(0);
 });
 
-test("search filters the shape library", async ({ page }) => {
+test("the shape library shows tappable shapes", async ({ page }) => {
     await page.goto("/");
-    await page.getByPlaceholder("Search shapes…").fill("star");
     await expect(page.getByRole("button", { name: "Add Star to canvas" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Add Square to canvas" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Add Square to canvas" })).toBeVisible();
 });
 
 test("clicking a shape draws pixels onto the canvas", async ({ page }) => {
