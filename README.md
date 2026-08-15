@@ -18,12 +18,15 @@ paint it - and export the finished drawing straight to Photos.
 - **14 shapes, all pixelated** - square, rectangle, circle, triangle, parallelogram,
   pentagon, hexagon, octagon, star, asterisk, moon (crescent), and solid / dashed /
   dotted lines. Every shape is rasterized to chunky Minecraft blocks.
-- **Searchable shape library** - filter by name or keyword, tap to add to the canvas.
-- **Move, resize, recolor** - drag to move, drag the corner grip to resize (everything
-  snaps to the block grid). Two modes: **Move** and **Paint** (tap a shape to drop the
-  active color - great with Apple Pencil).
-- **Plain white sheet** - like a fresh page in Paint.
-- **Name it** - a drawing name plus a silver student-name + date banner up top.
+- **Tap-to-add shape grid** - a compact rail of pixelated previews; tap to drop one on the
+  canvas.
+- **Move, resize, rotate, recolor** - drag to move, drag a corner grip to resize, use the
+  top grip to rotate (everything snaps to the block grid). **17 crayon-box colors** plus a
+  custom picker.
+- **Draw, fill, erase** - freehand pencil, paint-bucket flood fill of enclosed areas, and a
+  cell-by-cell eraser - all great with Apple Pencil.
+- **Undo + copy / paste / duplicate** - Cmd/Ctrl+Z, C, V, D; Backspace/Delete removes.
+- **Plain white sheet** - a fresh full-screen page, like Paint.
 - **Export to Photos** - on iPad/iPhone the native share sheet opens with "Save Image";
   elsewhere it downloads a PNG.
 - **iPad-first & responsive**, Apple-Pencil / touch / mouse via Pointer Events.
@@ -31,7 +34,9 @@ paint it - and export the finished drawing straight to Photos.
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · HTML Canvas · Vitest + Playwright.
-No runtime dependencies beyond React.
+No runtime dependencies beyond React. The kid-handwriting font is
+[Comic Neue](https://github.com/crozynski/comicneue), bundled under the
+[SIL Open Font License 1.1](public/fonts/OFL.txt).
 
 ## Architecture
 
@@ -40,10 +45,10 @@ just draws the computed blocks.
 
 ```mermaid
 flowchart TD
-    Page["app/page.tsx<br/>(layout + toolbar)"]
+    Page["app/page.tsx<br/>(layout)"]
     Canvas["components/Canvas.tsx<br/>(pointer: move/resize/paint)"]
-    Lib["components/ShapeLibrary + ColorPalette + TopBar"]
-    Editor["lib/useEditor.ts<br/>(shapes, selection, color, names)"]
+    Lib["components/Toolbar + ShapeLibrary + ColorPalette"]
+    Editor["lib/useEditor.ts<br/>(shapes, selection, color, undo)"]
     Shapes["lib/shapes.ts<br/>(pure: verts, pixelation, hit-test)"]
     Render["lib/render.ts<br/>(paint scene)"]
     Export["lib/exportImage.ts<br/>(offscreen PNG + share)"]
@@ -73,7 +78,7 @@ npm run dev            # http://localhost:3022
 npm run typecheck
 npm run lint           # eslint (flat config + jsx-a11y)
 npm run format:check   # prettier
-npm test               # vitest unit tests
+npm test               # vitest unit tests (coverage-gated: 95% lines/statements/functions)
 npm run test:e2e       # playwright end-to-end
 ```
 

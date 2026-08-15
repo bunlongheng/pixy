@@ -53,7 +53,27 @@ export const GRID_W = Math.ceil(CANVAS_W / CELL);
 export const GRID_H = Math.ceil(CANVAS_H / CELL);
 
 /** Kid-friendly paint palette. */
-export const PALETTE = ["#000000", "#ffffff", "#e11d2a", "#ff7a00", "#ffd400", "#2ecc40", "#0aa5ff", "#0047ab", "#8e44ec", "#ff5fa2", "#8b5a2b", "#9aa5b1"];
+// 17 sensible crayon-box colors, ordered as a natural spectrum: neutrals, then warm -> cool.
+// The 5 additions (charcoal, tan, lime, teal, magenta) sit in hue order between the originals.
+export const PALETTE = [
+    "#000000", // black
+    "#374151", // charcoal
+    "#9aa5b1", // gray
+    "#ffffff", // white
+    "#e11d2a", // red
+    "#ff7a00", // orange
+    "#d9a06b", // tan
+    "#8b5a2b", // brown
+    "#ffd400", // yellow
+    "#8bc34a", // lime
+    "#2ecc40", // green
+    "#009688", // teal
+    "#0aa5ff", // sky blue
+    "#0047ab", // cobalt
+    "#8e44ec", // purple
+    "#c2185b", // magenta
+    "#ff5fa2", // pink
+];
 
 interface LibEntry {
     type: ShapeType;

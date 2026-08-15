@@ -2,8 +2,8 @@ import { type Shape, shapeCells, shapeCorners, rotateHandlePoint, CELL, CANVAS_W
 
 export type Nameplate = { title: string; student: string; date: string };
 
-/** Kid-handwriting font stack. 'For Kids 2' is bundled; the rest are native fallbacks. */
-export const HAND_FONT = "'For Kids 2', 'Bradley Hand', 'Chalkboard SE', 'Comic Sans MS', cursive";
+/** Kid-handwriting font stack. 'Comic Neue' (OFL) is bundled; the rest are native fallbacks. */
+export const HAND_FONT = "'Comic Neue', 'Bradley Hand', 'Chalkboard SE', 'Comic Sans MS', cursive";
 
 /** Per-block grid line color that stays visible on both dark and light fills. */
 export function gridStroke(color: string): string {

@@ -14,7 +14,6 @@ import {
     CANVAS_W,
     CANVAS_H,
     CELL,
-    PALETTE,
 } from "@/lib/shapes";
 
 /** Owns the drawing state: shapes, selection, active color, names, and undo history. */
@@ -28,7 +27,7 @@ export function useEditor() {
     const shapesRef = useRef(shapes);
     shapesRef.current = shapes; // always mirror the latest committed shapes for synchronous reads
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [color, setColor] = useState<string>(PALETTE[2]);
+    const [color, setColor] = useState<string>("#e11d2a"); // default to red
     const [drawingName, setDrawingName] = useState("My Drawing");
     const [studentName, setStudentName] = useState("Norden Heng");
 

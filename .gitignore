@@ -33,3 +33,7 @@ yarn-debug.log*
 
 # coverage
 /coverage
+
+# Next.js auto-generated agent rule files
+/AGENTS.md
+/CLAUDE.md

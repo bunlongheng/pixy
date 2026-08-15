@@ -1,8 +1,15 @@
-/* Kid handwriting font (For Kids 2, demo - personal use). Bundled so the export matches. */
+/* Kid handwriting font: Comic Neue (SIL Open Font License 1.1 - see public/fonts/OFL.txt).
+   Bundled so the exported PNG matches the on-screen text. Free to redistribute. */
 @font-face {
-    font-family: "For Kids 2";
-    src: url("/fonts/ForKids2.ttf") format("truetype");
-    font-weight: 400 900;
+    font-family: "Comic Neue";
+    src: url("/fonts/ComicNeue-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: "Comic Neue";
+    src: url("/fonts/ComicNeue-Bold.ttf") format("truetype");
+    font-weight: 700 900;
     font-display: swap;
 }
 
@@ -23,7 +30,7 @@ body {
     background: #e8eaf0;
     color: #1d1d1f;
     font-family:
-        "For Kids 2",
+        "Comic Neue",
         -apple-system,
         BlinkMacSystemFont,
         "SF Pro Display",
@@ -56,4 +63,29 @@ input {
     field-sizing: content;
     min-width: 3ch;
     max-width: 100%;
+}
+
+/* shape library grid: a single narrow column scrolling down on desktop (keeps the paper wide),
+   2 rows scrolling sideways on small screens */
+.shape-grid {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+@media (max-width: 760px) {
+    .shape-grid {
+        grid-template-columns: none;
+        grid-template-rows: 1fr 1fr;
+        grid-auto-flow: column;
+        grid-auto-columns: 150px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-right: 0;
+        padding-bottom: 6px;
+    }
 }

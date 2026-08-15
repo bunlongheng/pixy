@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     async headers() {
         return [
             { source: "/:path*", headers: securityHeaders },
-            { source: "/:all*(png|webp|svg|ico|jpg|jpeg|woff2|woff)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+            { source: "/:all*(png|webp|svg|ico|jpg|jpeg|woff2|woff|ttf)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
         ];
     },
 };
