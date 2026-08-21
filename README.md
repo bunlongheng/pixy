@@ -88,3 +88,9 @@ Husky pre-push runs typecheck + lint + format + unit; GitHub Actions runs the fu
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<p align="center">
+  <sub>Built by <a href="https://bunlongheng.com">Bunlong Heng</a> &middot; <a href="https://bunlongheng.com/projects/pixy">See it in my portfolio &rarr;</a></sub>
+</p>
