@@ -42,7 +42,7 @@ export type Cell = [number, number]; // grid coords (in CELL units)
 export type Pt = [number, number];
 
 /** Size of one Minecraft "block" in canvas pixels. Tuned so shapes read as pixel art but not crude. */
-export const CELL = 20;
+export const CELL = 16;
 
 /** Logical canvas size (the white sheet). Fixed so exports are consistent. */
 export const CANVAS_W = 1280;

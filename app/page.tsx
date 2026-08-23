@@ -63,14 +63,14 @@ export default function PixyPage() {
                 .tb-spacer { flex:1; min-width:10px; }
                 .stage { flex:1; display:flex; min-height:0; }
                 .library { width:150px; flex-shrink:0; padding:8px; border-right:2px solid #d7dbe3; background:#f2f4f8; overflow:hidden; }
-                .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:6px; overflow:auto; background:#dfe3ea; }
+                .canvas-wrap { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:24px 6px; overflow:auto; background:#dfe3ea; }
                 .paper { position:relative; display:inline-flex; max-width:100%; max-height:100%; }
                 @media (max-width: 760px) {
                     .toolbar { flex-wrap:wrap; overflow-x:visible; row-gap:10px; }
                     .tb-spacer { flex-basis:100%; min-width:0; height:0; }
                     .stage { flex-direction:column; }
                     .library { width:auto; height:150px; flex-shrink:0; border-right:none; border-bottom:2px solid #d7dbe3; }
-                    .canvas-wrap { padding:6px; }
+                    .canvas-wrap { padding:16px 6px; }
                 }
             `}</style>
 
