@@ -26,7 +26,7 @@ const btn = (active = false): React.CSSProperties => ({
     padding: "10px 14px",
     borderRadius: 0,
     border: active ? "3px solid #111827" : "3px solid transparent",
-    background: active ? "#1d2530" : NEUTRAL,
+    background: NEUTRAL,
     color: "white",
     lineHeight: 1,
     whiteSpace: "nowrap",
