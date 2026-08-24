@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import { useEditor } from "@/lib/useEditor";
+import { setPaperPortrait, movedShape } from "@/lib/shapes";
 import { exportShapes } from "@/lib/exportImage";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import { ShapeLibrary } from "@/components/ShapeLibrary";
@@ -12,9 +13,26 @@ export default function PixyPage() {
     const [toast, setToast] = useState("");
     const [mode, setMode] = useState<Mode>("select");
     const [confirmClear, setConfirmClear] = useState(false);
+    const [portrait, setPortrait] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useKeyboardShortcuts(ed);
+
+    // Portrait devices draw on a vertical sheet (the library also hides via CSS to give it room).
+    const edRef = useRef(ed);
+    edRef.current = ed;
+    useEffect(() => {
+        const mq = window.matchMedia("(orientation: portrait)");
+        const apply = () => {
+            setPaperPortrait(mq.matches);
+            setPortrait(mq.matches);
+            // Re-clamp so nothing is stranded off the resized sheet.
+            edRef.current.shapes.forEach((s) => edRef.current.updateShape(s.id, (sh) => movedShape(sh, 0, 0)));
+        };
+        apply();
+        mq.addEventListener("change", apply);
+        return () => mq.removeEventListener("change", apply);
+    }, []);
 
     // Esc closes the clear-confirm modal.
     useEffect(() => {
@@ -72,6 +90,9 @@ export default function PixyPage() {
                     .library { width:auto; height:150px; flex-shrink:0; border-right:none; border-bottom:2px solid #d7dbe3; }
                     .canvas-wrap { padding:16px 6px; }
                 }
+                @media (orientation: portrait) {
+                    .library { display:none; }
+                }
             `}</style>
 
             <div className="app">
@@ -94,6 +115,7 @@ export default function PixyPage() {
                     <div className="canvas-wrap">
                         <div className="paper">
                             <Canvas
+                                key={portrait ? "portrait" : "landscape"}
                                 shapes={ed.shapes}
                                 selectedId={ed.selectedId}
                                 mode={mode}

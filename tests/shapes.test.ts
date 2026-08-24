@@ -23,6 +23,9 @@ import {
     CELL,
     CANVAS_W,
     CANVAS_H,
+    GRID_W,
+    GRID_H,
+    setPaperPortrait,
     type Shape,
     type ShapeType,
 } from "@/lib/shapes";
@@ -230,5 +233,22 @@ describe("export helpers", () => {
     });
     it("dateLabel formats a given date", () => {
         expect(dateLabel(new Date("2026-07-20T12:00:00"))).toBe("Jul 20, 2026");
+    });
+});
+
+describe("paper orientation", () => {
+    it("swaps the sheet and grid for portrait, then restores landscape", () => {
+        // landscape is the default
+        expect(CANVAS_W).toBeGreaterThan(CANVAS_H);
+
+        setPaperPortrait(true);
+        expect(CANVAS_W).toBeLessThan(CANVAS_H);
+        expect(GRID_W).toBe(Math.ceil(CANVAS_W / CELL));
+        expect(GRID_H).toBe(Math.ceil(CANVAS_H / CELL));
+
+        setPaperPortrait(false);
+        expect(CANVAS_W).toBeGreaterThan(CANVAS_H);
+        expect(GRID_W).toBe(Math.ceil(CANVAS_W / CELL));
+        expect(GRID_H).toBe(Math.ceil(CANVAS_H / CELL));
     });
 });
