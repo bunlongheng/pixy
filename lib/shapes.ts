@@ -44,13 +44,23 @@ export type Pt = [number, number];
 /** Size of one Minecraft "block" in canvas pixels. Tuned so shapes read as pixel art but not crude. */
 export const CELL = 16;
 
-/** Logical canvas size (the white sheet). Fixed so exports are consistent. */
-export const CANVAS_W = 1280;
-export const CANVAS_H = 896;
+/** Logical canvas size (the white sheet). Landscape by default; portrait devices flip it vertical. */
+const PAPER_LONG = 1280;
+const PAPER_SHORT = 896;
+export let CANVAS_W = PAPER_LONG;
+export let CANVAS_H = PAPER_SHORT;
 
 /** Grid dimensions in whole blocks. */
-export const GRID_W = Math.ceil(CANVAS_W / CELL);
-export const GRID_H = Math.ceil(CANVAS_H / CELL);
+export let GRID_W = Math.ceil(CANVAS_W / CELL);
+export let GRID_H = Math.ceil(CANVAS_H / CELL);
+
+/** Swap the sheet orientation; importers see the new values via ES module live bindings. */
+export function setPaperPortrait(portrait: boolean) {
+    CANVAS_W = portrait ? PAPER_SHORT : PAPER_LONG;
+    CANVAS_H = portrait ? PAPER_LONG : PAPER_SHORT;
+    GRID_W = Math.ceil(CANVAS_W / CELL);
+    GRID_H = Math.ceil(CANVAS_H / CELL);
+}
 
 /** Kid-friendly paint palette. */
 // 17 sensible crayon-box colors, ordered as a natural spectrum: neutrals, then warm -> cool.
