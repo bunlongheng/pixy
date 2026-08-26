@@ -1,3 +1,13 @@
+<div align="center">
+  <img src="docs/icon.png" alt="Pixy" width="96" height="96" />
+  <h1>Pixy</h1>
+  <p><em>Pixel-block drawing for iPad + Apple Pencil: shapes, freehand, paint bucket, export to Photos</em></p>
+  <p><a href="https://pixy-bheng.vercel.app">Live</a> &middot; <a href="https://github.com/bunlongheng/pixy">Repo</a> &middot; <a href="https://bunlongheng.com/projects?name=pixy">Portfolio</a></p>
+  <img src="docs/social-preview.png" alt="Pixy - preview" width="820" />
+</div>
+
+---
+
 # Pixy
 
 [![CI](https://github.com/bunlongheng/pixy/actions/workflows/ci.yml/badge.svg)](https://github.com/bunlongheng/pixy/actions/workflows/ci.yml)
