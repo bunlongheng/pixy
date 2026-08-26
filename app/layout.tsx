@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SwRegister from "./sw-register";
 
 export const metadata: Metadata = {
     title: "Pixy - pixel shape drawing for kids",
     description:
         "A Minecraft-pixelated shape editor for iPad and Apple Pencil. Add shapes, move and resize them, paint colors, and export your drawing to Photos.",
+    manifest: "/manifest.webmanifest",
     openGraph: {
         title: "Pixy",
         description: "Pixel-art shape drawing for kids - iPad + Apple Pencil, export to Photos.",
@@ -23,7 +25,10 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body>{children}</body>
+            <body>
+                {children}
+                <SwRegister />
+            </body>
         </html>
     );
 }
