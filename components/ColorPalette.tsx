@@ -3,7 +3,7 @@ import { PALETTE } from "@/lib/shapes";
 
 export function ColorPalette({ color, onPick }: { color: string; onPick: (c: string) => void }) {
     return (
-        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "nowrap", gap: 8, alignItems: "center", flexShrink: 0 }}>
+        <div role="group" aria-label="Colors" style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", flexShrink: 1, minWidth: 0 }}>
             {PALETTE.map((c) => {
                 const active = c.toLowerCase() === color.toLowerCase();
                 return (
